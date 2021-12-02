@@ -1,6 +1,7 @@
 package post.rule34;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.extern.log4j.Log4j2;
 import post.Post;
 import post.PostMetadata;
 import post.api.PostApi;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 
+@Log4j2
 public class Rule34Api implements PostApi {
 
     private static final String BASE_URL = "https://api.rule34.xxx/index.php?page=dapi&s=post&q=index";
@@ -55,6 +57,7 @@ public class Rule34Api implements PostApi {
             URL url = new URL(urlString);
             return xmlMapper.readValue(url, Rule34QueryResult.class);
         } catch (IOException e) {
+            log.error(e);
             throw new RuntimeException(e);
         }
     }

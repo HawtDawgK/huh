@@ -11,6 +11,7 @@ import org.javacord.api.listener.interaction.MessageComponentCreateListener;
 import post.api.PostApi;
 
 import java.util.Optional;
+import java.util.Random;
 
 @Log4j2
 @Getter
@@ -22,6 +23,8 @@ public class PostMessage {
     private final Message message;
     private final PostApi postApi;
     private final MessageComponentCreateListener messageComponentCreateListener = this::handleInteraction;
+
+    private final Random random = new Random();
 
     public PostMessage(int count, String tags, Message message, PostApi postApi) {
         this.count = Math.min(count, postApi.getMaxCount());
@@ -45,7 +48,7 @@ public class PostMessage {
     }
 
     void randomPage() {
-        page = (int) (Math.random() * (count + 1));
+        page = random.nextInt(count + 1);
         updatePost();
     }
 

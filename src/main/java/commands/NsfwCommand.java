@@ -48,7 +48,6 @@ public class NsfwCommand implements ServerCommand {
         String tags = interaction.getSecondOptionStringValue().orElse("");
 
         PostSite postSite = PostSite.findByName(siteName);
-
         PostMessageFactory.createPost(interaction, textChannel, tags, postSite);
     }
 }
