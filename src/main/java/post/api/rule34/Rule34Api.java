@@ -1,21 +1,28 @@
-package post.rule34;
+package post.api.rule34;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import lombok.extern.log4j.Log4j2;
+import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
+import lombok.extern.slf4j.Slf4j;
+import post.autocomplete.AutocompleteResult;
 import post.Post;
 import post.PostMetadata;
 import post.api.PostApi;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-@Log4j2
+@Slf4j
 public class Rule34Api implements PostApi {
 
     private static final String BASE_URL = "https://api.rule34.xxx/index.php?page=dapi&s=post&q=index";
 
     private static final XmlMapper xmlMapper = new XmlMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Optional<Post> fetchById(long id) {
@@ -44,6 +51,28 @@ public class Rule34Api implements PostApi {
     }
 
     @Override
+    public List<ApplicationCommandOptionChoiceData> autocomplete(String input) {
+        String urlString =  "https://rule34.xxx/autocomplete.php?q=" + input;
+
+        try {
+            URL url = new URL(urlString);
+            AutocompleteResult[] autocompleteResults = objectMapper.readValue(url, AutocompleteResult[].class);
+
+            return Arrays.stream(autocompleteResults)
+                    .map(AutocompleteResult::toApplicationCommandOptionChoiceData)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean hasAutocomplete() {
+        return true;
+    }
+
+    @Override
     public int getMaxCount() {
         return 200000;
     }
@@ -57,7 +86,7 @@ public class Rule34Api implements PostApi {
             URL url = new URL(urlString);
             return xmlMapper.readValue(url, Rule34QueryResult.class);
         } catch (IOException e) {
-            log.error(e);
+            log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }

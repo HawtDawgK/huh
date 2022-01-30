@@ -1,55 +1,53 @@
 package post;
 
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.entity.channel.MessageChannel;
+import embed.ErrorEmbed;
 import embed.PostNotFoundEmbed;
 import enums.PostSite;
-import org.javacord.api.entity.channel.TextChannel;
-import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.component.ActionRow;
-import org.javacord.api.entity.message.component.Button;
-import org.javacord.api.interaction.SlashCommandInteraction;
+
 import post.api.PostApi;
+import post.api.rule34.Rule34Api;
+import post.history.PostHistory;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public class PostMessageFactory {
 
     private PostMessageFactory() { }
 
-    public static void createPost(SlashCommandInteraction interaction, TextChannel textChannel, String tags, PostSite postSite) {
+    public static Mono<Void> createPost(ChatInputInteractionEvent event, String tags, PostSite postSite) {
         PostApi postApi = postSite.getPostApi();
-
-        int count = postSite.getPostApi().fetchCount(tags);
+        int count = postApi.fetchCount(tags);
 
         if (count == 0) {
-            textChannel.sendMessage(new PostNotFoundEmbed(tags));
-            return;
+            return event.reply().withEmbeds(PostNotFoundEmbed.create(tags));
         }
 
-        Post post = postApi.fetchByTagsAndPage(tags, 0).orElse(null);
+        PostMessage postMessage = new PostMessage(count, tags, event, postApi);
+        postMessage.initReply();
 
-        if (post == null) {
-            textChannel.sendMessage(new PostNotFoundEmbed(tags));
-            return;
-        }
+        PostMessages.addPost(postMessage);
 
-        PostMessageable postMessageable = PostMessageable.fromPost(post);
-
-        // Needed because the original response updater does not remove embeds
-        Message message = interaction.createImmediateResponder()
-                .setContent(postMessageable.getContent())
-                .addEmbed(postMessageable.getEmbed())
-                .addComponents(createActionRow())
-                .respond().join()
-                .update().join();
-
-        PostMessage postMessage = new PostMessage(count, tags, message, postApi);
-        postMessage.registerListener();
+        return Mono.empty();
     }
 
-    public static ActionRow createActionRow() {
-        return ActionRow.of(Button.primary("next-page", "Next page"),
-                        Button.primary("random-page", "Random page"),
-                        Button.primary("previous-page", "Previous page"),
-                        Button.success("add-favorite", "Add favorite"),
-                        Button.danger("delete-message", "Delete message"));
+    public static Mono<Void> createListPost(ChatInputInteractionEvent event) {
+        MessageChannel messageChannel = event.getInteraction().getChannel().block();
+
+        List<PostResolvable> postHistoryFromChannel = PostHistory.getHistory(messageChannel);
+
+        if (postHistoryFromChannel.isEmpty()) {
+            return event.reply().withEmbeds(ErrorEmbed.create("No posts in history"));
+        }
+
+        PostMessage postMessage = new PostListMessage(postHistoryFromChannel, null, event, new Rule34Api());
+        postMessage.initReply();
+
+        PostMessages.addPost(postMessage);
+
+        return Mono.empty();
     }
 
 }

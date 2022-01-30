@@ -1,4 +1,4 @@
-package post.rule34;
+package post.api.rule34;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;

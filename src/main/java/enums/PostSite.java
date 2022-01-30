@@ -1,23 +1,28 @@
 package enums;
 
+import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.javacord.api.interaction.SlashCommandOptionChoice;
 import post.api.PostApi;
-import post.rule34.Rule34Api;
+import post.api.danbooru.DanbooruApi;
+import post.api.rule34.Rule34Api;
 
 import java.util.Arrays;
 
 @Getter
 @RequiredArgsConstructor
 public enum PostSite {
-    RULE34("rule34", new Rule34Api());
+    RULE34("rule34", new Rule34Api()),
+    DANBOORU("danbooru", new DanbooruApi());
 
     private final String name;
     private final PostApi postApi;
 
-    public SlashCommandOptionChoice toSlashCommandOptionChoice() {
-        return SlashCommandOptionChoice.create(name, name);
+    public ApplicationCommandOptionChoiceData toApplicationCommand() {
+        return ApplicationCommandOptionChoiceData.builder()
+                .name(name)
+                .value(name)
+                .build();
     }
 
     public static PostSite findByName(String name) {

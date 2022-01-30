@@ -2,20 +2,20 @@ package post;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
-import util.CustomDateDeserializer;
 import util.Formats;
 
 import java.util.Date;
 import java.util.Optional;
 
-@Getter()
+@Getter
+@Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class Post {
+public abstract class Post {
 
     private long id;
 
@@ -29,7 +29,6 @@ public class Post {
 
     private String rating;
 
-    @JsonDeserialize(using = CustomDateDeserializer.class)
     private Date createdAt;
 
     private @Nullable PostMetadata postMetadata;

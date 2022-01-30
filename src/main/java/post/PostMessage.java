@@ -1,89 +1,103 @@
 package post;
 
-import api.Api;
+import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.spec.*;
 import embed.PostNotFoundEmbed;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
-import org.javacord.api.entity.message.Message;
-import org.javacord.api.event.interaction.MessageComponentCreateEvent;
-import org.javacord.api.interaction.MessageComponentInteraction;
-import org.javacord.api.listener.interaction.MessageComponentCreateListener;
+import lombok.extern.slf4j.Slf4j;
 import post.api.PostApi;
+import post.history.PostHistory;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 import java.util.Random;
 
-@Log4j2
+@Slf4j
 @Getter
 public class PostMessage {
 
     private int page;
     private final int count;
     private final String tags;
-    private final Message message;
+    private final ChatInputInteractionEvent event;
     private final PostApi postApi;
-    private final MessageComponentCreateListener messageComponentCreateListener = this::handleInteraction;
 
     private final Random random = new Random();
 
-    public PostMessage(int count, String tags, Message message, PostApi postApi) {
+    public PostMessage(int count, String tags, ChatInputInteractionEvent event, PostApi postApi) {
         this.count = Math.min(count, postApi.getMaxCount());
         this.tags = tags;
-        this.message = message;
+        this.event = event;
         this.postApi = postApi;
-    }
-
-    public void registerListener() {
-        Api.getAPI().addMessageComponentCreateListener(messageComponentCreateListener);
     }
 
     void nextPage() {
         page = (page + 1) % count;
-        updatePost();
     }
 
     void previousPage() {
         page = (page - 1) % count;
-        updatePost();
     }
 
     void randomPage() {
         page = random.nextInt(count + 1);
-        updatePost();
     }
 
-    void deleteMessage() {
-        message.delete().join();
-        Api.getAPI().removeListener(this.messageComponentCreateListener);
+    void updatePost(ButtonInteractionEvent buttonInteractionEvent) {
+        Optional<Post> optionalPost = getCurrentPost();
+
+        InteractionReplyEditMono edit = buttonInteractionEvent.editReply();
+        edit = toPostMessageable(edit, optionalPost);
+
+        buttonInteractionEvent.deferEdit().then(edit).block();
     }
 
-    private void updatePost() {
+    Optional<Post> getCurrentPost() {
         Optional<Post> optionalPost = postApi.fetchByTagsAndPage(tags, page);
 
-        optionalPost.ifPresentOrElse(post -> {
-            PostMessageable postMessageable = PostMessageable.fromPost(post);
-            message.edit(postMessageable.getContent(), postMessageable.getEmbed()).join();
-        }, () -> message.edit(new PostNotFoundEmbed(tags)).join());
+        optionalPost.ifPresent(post -> PostHistory.addPost(event.getInteraction().getChannel().block(), post, postApi));
+        return optionalPost;
     }
 
-    public void handleInteraction(MessageComponentCreateEvent messageComponentCreateEvent) {
-        MessageComponentInteraction interaction = messageComponentCreateEvent.getMessageComponentInteraction();
+    PostMessageable toPostMessageable(Optional<Post> optionalPost) {
+        return optionalPost.map(PostMessageable::fromPost)
+                .orElseGet(() -> PostMessageable.fromEmbed(PostNotFoundEmbed.create(tags)));
+    }
 
-        switch (interaction.getCustomId()) {
+    InteractionReplyEditMono toPostMessageable(InteractionReplyEditMono edit, Optional<Post> optionalPost) {
+        PostMessageable postMessageable = toPostMessageable(optionalPost);
+
+        return edit.withContentOrNull(postMessageable.getContent())
+                .withEmbeds(postMessageable.getEmbed())
+                .withComponents(PostMessageButtons.actionRow());
+    }
+
+    public Mono<Void> handleInteraction(ButtonInteractionEvent buttonInteractionEvent) {
+        switch (buttonInteractionEvent.getCustomId()) {
             case "next-page" -> nextPage();
             case "random-page" -> randomPage();
             case "previous-page" -> previousPage();
             case "add-favorite" -> log.warn("Not implemented");
             case "delete-message" -> {
-                deleteMessage();
-                return;
+                event.deleteReply().block();
+                PostMessages.removePost(this);
+                return Mono.empty();
             }
-            default -> log.warn("Invalid case for interaction id " + interaction.getCustomId());
+            default -> log.warn("Received invalid interaction id " + buttonInteractionEvent.getCustomId());
         }
 
-        interaction.createOriginalMessageUpdater()
-                .addComponents(PostMessageFactory.createActionRow())
-                .update()
-                .join();
+        updatePost(buttonInteractionEvent);
+        return Mono.empty();
+    }
+
+    public void initReply() {
+        Optional<Post> currentPost = getCurrentPost();
+        PostMessageable postMessageable = PostMessageable.fromOptionalPost(currentPost, tags);
+
+        event.reply(postMessageable.getContent() != null ? postMessageable.getContent() : "")
+                .withEmbeds(postMessageable.getEmbed())
+                .withComponents(PostMessageButtons.actionRow())
+                .block();
     }
 }

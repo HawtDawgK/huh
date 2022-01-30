@@ -1,25 +1,33 @@
 package embed;
 
-import org.javacord.api.entity.message.embed.EmbedBuilder;
+import discord4j.core.spec.EmbedCreateFields.Footer;
+import discord4j.core.spec.EmbedCreateSpec;
 import post.Post;
 
-public class PostMessageEmbed extends EmbedBuilder {
+public class PostMessageEmbed {
 
-    public PostMessageEmbed(Post post) {
-        setTitle("Post");
-        setImage(post.getFileUrl());
+    private PostMessageEmbed() {
 
+    }
+
+    public static EmbedCreateSpec toEmbed(Post post) {
         StringBuilder footerTextBuilder = new StringBuilder();
 
         post.getPostMetadata().ifPresent(metadata -> {
             footerTextBuilder.append("Page ");
             footerTextBuilder.append(metadata.getPage());
-            footerTextBuilder.append(" of \u2022 ");
+            footerTextBuilder.append(" of ");
+            footerTextBuilder.append(metadata.getTagCount());
+            footerTextBuilder.append(" \u2022 ");
         });
 
         footerTextBuilder.append("Score: ").append(post.getScore());
-        setFooter(footerTextBuilder.toString());
 
-        setTimestamp(post.getCreatedAt().toInstant());
+        return EmbedCreateSpec.builder().title("Post")
+                .image(post.getFileUrl())
+                .timestamp(post.getCreatedAt().toInstant())
+                .footer(Footer.of(footerTextBuilder.toString(), null))
+                .build();
     }
+
 }
