@@ -17,7 +17,6 @@ public class ErrorEmbed {
         EmbedCreateSpec.Builder embedCreateSpec = EmbedCreateSpec.builder()
                 .title("Error")
                 .description(message)
-
                 .color(Color.RED)
                 .timestamp(Instant.now());
 

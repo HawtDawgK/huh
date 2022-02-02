@@ -8,6 +8,7 @@ import discord4j.discordjson.json.ApplicationCommandRequest;
 import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
 import post.PostMessageFactory;
+import post.api.PostFetchException;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -37,7 +38,7 @@ public class PostsCommand implements Command {
     }
 
     @Override
-    public Mono<Void> apply(ChatInputInteractionEvent event) throws CommandException {
+    public Mono<Void> apply(ChatInputInteractionEvent event) throws CommandException, PostFetchException {
         CommandUtil.checkNsfwChannel(event);
 
         String siteName = event.getOption("site")

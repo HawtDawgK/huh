@@ -37,12 +37,10 @@ public class CommandUtil {
             if (!textChannel.isNsfw()) {
                 throw new CommandException("This command can only be used in NSFW channels.");
             }
-
-            return;
+        } else {
+            log.error("Received ChatInputInteractionEvent for non-text channel {}", messageChannel);
+            throw new CommandException("Could not find text channel");
         }
-
-        log.error("Received ChatInputInteractionEvent for non-text channel {}", messageChannel);
-        throw new CommandException("Could not find text channel");
     }
 
 }
