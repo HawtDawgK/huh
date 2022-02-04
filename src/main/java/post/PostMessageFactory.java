@@ -2,7 +2,6 @@ package post;
 
 import db.PostRepository;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import embed.ErrorEmbed;
 import embed.PostNotFoundEmbed;
@@ -15,7 +14,6 @@ import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 public class PostMessageFactory {
@@ -30,7 +28,9 @@ public class PostMessageFactory {
             return event.reply().withEmbeds(PostNotFoundEmbed.create(tags));
         }
 
-        PostMessage postMessage = new PostMessage(count, tags, event, postSite);
+        int maxCount = Math.min(count, postApi.getMaxCount());
+
+        PostMessage postMessage = new PostApiMessage(event, postApi, tags, maxCount);
         postMessage.initReply();
 
         PostMessages.addPost(postMessage);
@@ -38,28 +38,24 @@ public class PostMessageFactory {
         return Mono.empty();
     }
 
-    public static Mono<Void> createListPostFromFavorites(ChatInputInteractionEvent event) {
-        User user = event.getInteraction().getUser();
+    public static Mono<Void> createListPostFromFavorites(ChatInputInteractionEvent event, User user) {
         try {
             List<PostResolvable> favorites = PostRepository.getFavorites(user.getId().asLong());
 
             if (favorites.isEmpty()) {
-                return event.reply().withEmbeds(ErrorEmbed.create("No posts in history"));
+                return event.reply().withEmbeds(ErrorEmbed.create("No favorites found."));
             }
 
-            return createPostListMessage(favorites, event);
+            PostMessage postMessage = new FavoritesMessage(favorites, user, event);
+            postMessage.initReply();
+
+            PostMessages.addPost(postMessage);
+
+            return Mono.empty();
         } catch (SQLException e) {
             log.error("Error occurred fetching favorites", e);
             return event.reply().withEmbeds(ErrorEmbed.create("Error fetching favorites"));
         }
     }
 
-    public static Mono<Void> createPostListMessage(List<PostResolvable> postResolvables, ChatInputInteractionEvent event) {
-        PostMessage postMessage = new PostListMessage(postResolvables, null, event, PostSite.RULE34);
-        postMessage.initReply();
-
-        PostMessages.addPost(postMessage);
-
-        return Mono.empty();
-    }
 }

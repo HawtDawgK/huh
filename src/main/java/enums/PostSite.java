@@ -31,4 +31,5 @@ public enum PostSite {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Received invalid site " + name));
     }
+
 }

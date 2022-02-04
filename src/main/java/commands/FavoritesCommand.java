@@ -1,7 +1,9 @@
 package commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.core.object.entity.User;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import post.PostMessageFactory;
@@ -25,6 +27,13 @@ public class FavoritesCommand implements Command {
     @Override
     public Mono<Void> apply(ChatInputInteractionEvent event) throws CommandException {
         CommandUtil.checkNsfwChannel(event);
-        return PostMessageFactory.createListPostFromFavorites(event);
+
+        User user = event.getOption("user")
+                .flatMap(o -> o.getValue()
+                        .map(ApplicationCommandInteractionOptionValue::asUser)
+                        .map(Mono::block))
+                .orElse(event.getInteraction().getUser());
+
+        return PostMessageFactory.createListPostFromFavorites(event, user);
     }
 }

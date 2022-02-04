@@ -3,6 +3,7 @@ package post;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import enums.PostSite;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,8 @@ public abstract class Post {
     private Date createdAt;
 
     private @Nullable PostMetadata postMetadata;
+
+    private PostSite site;
 
     public boolean isAnimated() {
         String[] splitUrl = fileUrl.split("\\.");

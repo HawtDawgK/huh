@@ -39,7 +39,7 @@ public class CommandUtil {
             }
         } else {
             log.error("Received ChatInputInteractionEvent for non-text channel {}", messageChannel);
-            throw new CommandException("Could not find text channel");
+            throw new CommandException("Could not find text channel.");
         }
     }
 

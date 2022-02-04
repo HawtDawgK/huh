@@ -10,23 +10,13 @@ public class PostMessageEmbed {
 
     }
 
-    public static EmbedCreateSpec toEmbed(Post post) {
-        StringBuilder footerTextBuilder = new StringBuilder();
-
-        post.getPostMetadata().ifPresent(metadata -> {
-            footerTextBuilder.append("Page ");
-            footerTextBuilder.append(metadata.getPage());
-            footerTextBuilder.append(" of ");
-            footerTextBuilder.append(metadata.getTagCount());
-            footerTextBuilder.append(" \u2022 ");
-        });
-
-        footerTextBuilder.append("Score: ").append(post.getScore());
+    public static EmbedCreateSpec toEmbed(Post post, int page, int count) {
+        String footerText = String.format("Page %d of %d \u2022 Score: %d", page, count, post.getScore());
 
         return EmbedCreateSpec.builder().title("Post")
                 .image(post.getFileUrl())
                 .timestamp(post.getCreatedAt().toInstant())
-                .footer(Footer.of(footerTextBuilder.toString(), null))
+                .footer(Footer.of(footerText, null))
                 .build();
     }
 

@@ -16,17 +16,12 @@ public class PostMessageable {
     private final @Nullable String content;
     private final @Nullable EmbedCreateSpec embed;
 
-    public static PostMessageable fromOptionalPost(Optional<Post> optionalPost, String tags) {
-        return optionalPost.map(PostMessageable::fromPost)
-                .orElseGet(() ->fromEmbed(PostNotFoundEmbed.create(tags)));
-    }
-
-    public static PostMessageable fromPost(Post post) {
+    public static PostMessageable fromPost(Post post, int page, int count) {
         if (post.isAnimated()) {
             return new PostMessageable(post.getFileUrl(), null);
         }
 
-        return new PostMessageable(null, PostMessageEmbed.toEmbed(post));
+        return new PostMessageable(null, PostMessageEmbed.toEmbed(post, page, count));
     }
 
     public static PostMessageable fromEmbed(EmbedCreateSpec embed) {

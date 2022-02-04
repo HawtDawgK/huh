@@ -2,13 +2,11 @@ package launcher;
 
 import api.ClientWrapper;
 import commands.*;
-import db.PostRepository;
 import discord4j.core.event.domain.interaction.ChatInputAutoCompleteEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
-import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import embed.ErrorEmbed;
 import enums.PostSite;
@@ -45,9 +43,7 @@ public class Launcher {
         try {
             return commandMap.get(event.getCommandName()).apply(event);
         } catch (CommandException| PostFetchException e) {
-            return event.reply(InteractionApplicationCommandCallbackSpec.builder()
-                    .addEmbed(ErrorEmbed.create(e.getMessage()))
-                    .build());
+            return event.reply().withEmbeds(ErrorEmbed.create(e.getMessage()));
         }
     }
 

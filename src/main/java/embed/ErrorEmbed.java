@@ -9,9 +9,7 @@ import java.time.Instant;
 
 public class ErrorEmbed {
 
-    private ErrorEmbed() {
-
-    }
+    private ErrorEmbed() { }
 
     public static EmbedCreateSpec create(String message) {
         EmbedCreateSpec.Builder embedCreateSpec = EmbedCreateSpec.builder()

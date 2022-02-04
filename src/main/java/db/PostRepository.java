@@ -1,8 +1,10 @@
 package db;
 
 import api.ClientWrapper;
+import discord4j.core.object.entity.User;
 import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
+import post.Post;
 import post.PostResolvable;
 
 import java.io.IOException;
@@ -39,7 +41,7 @@ public class PostRepository {
     public static List<PostResolvable> getFavorites(long userId) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
-                Statement stmt = con.createStatement();
+                Statement stmt = con.createStatement()
         ) {
             ResultSet rs = stmt.executeQuery("select * from post where user_id = " + userId);
             List<PostResolvable> favorites = new ArrayList<>();
@@ -48,7 +50,7 @@ public class PostRepository {
                 long postId = rs.getLong(2);
                 String site = rs.getString(3);
 
-                favorites.add(new PostResolvable(postId, PostSite.findByName(site).getPostApi()));
+                favorites.add(new PostResolvable(postId, PostSite.findByName(site)));
             }
 
             return favorites;
@@ -58,53 +60,53 @@ public class PostRepository {
         }
     }
 
-    public static int addFavorite(long userId, long postId, PostSite site) throws SQLException {
+    public static void addFavorite(User user, Post post) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
-                Statement stmt = con.createStatement();
+                Statement stmt = con.createStatement()
         ) {
-            if (hasFavorite(userId, postId, site)) {
-                return 0;
+            if (hasFavorite(user, post)) {
+                return;
             }
 
             String query = String.format("INSERT INTO post (user_id, post_id, site_name) VALUES (%d, %d, \"%s\")",
-                    userId, postId, site.getName());
+                    user.getId().asLong(), post.getId(), post.getSite().getName());
 
-            return stmt.executeUpdate(query);
+            stmt.executeUpdate(query);
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw e;
         }
     }
 
-    public static int removeFavorite(long userId, long postId, PostSite site) throws SQLException {
+    public static void removeFavorite(User user, Post post) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
-                Statement stmt = con.createStatement();
+                Statement stmt = con.createStatement()
         ) {
-            if (!hasFavorite(userId, postId, site)) {
-                return 0;
+            if (!hasFavorite(user, post)) {
+                return;
             }
 
             String query = String.format("DELETE FROM post " +
                             "WHERE user_id = %d AND post_id = %d AND site_name = \"%s\";",
-                    userId, postId, site.getName());
+                    user.getId().asLong(), post.getId(), post.getSite().getName());
 
-            return stmt.executeUpdate(query);
+            stmt.executeUpdate(query);
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw e;
         }
     }
 
-    public static boolean hasFavorite(long userId, long postId, PostSite site) throws SQLException {
+    public static boolean hasFavorite(User user, Post post) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
-                Statement stmt = con.createStatement();
+                Statement stmt = con.createStatement()
         ) {
             String query = String.format("SELECT * FROM post " +
                             " WHERE user_id = %d AND post_id = %d AND site_name = \"%s\";",
-                    userId, postId, site.getName());
+                    user.getId().asLong(), post.getId(), post.getSite().getName());
 
             ResultSet rs = stmt.executeQuery(query);
             return rs.next();

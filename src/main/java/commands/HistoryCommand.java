@@ -4,7 +4,9 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import embed.ErrorEmbed;
-import post.PostMessageFactory;
+import post.PostListMessage;
+import post.PostMessage;
+import post.PostMessages;
 import post.PostResolvable;
 import post.history.PostHistory;
 import reactor.core.publisher.Mono;
@@ -29,10 +31,15 @@ public class HistoryCommand implements Command {
         List<PostResolvable> postHistoryFromChannel = PostHistory.getHistory(messageChannel);
 
         if (postHistoryFromChannel.isEmpty()) {
-            return event.reply().withEmbeds(ErrorEmbed.create("No posts in history"));
+            return event.reply().withEmbeds(ErrorEmbed.create("No posts in history."));
         }
 
-        return PostMessageFactory.createPostListMessage(postHistoryFromChannel, event);
+        PostMessage postMessage = new PostListMessage(postHistoryFromChannel, event);
+        postMessage.initReply();
+
+        PostMessages.addPost(postMessage);
+
+        return Mono.empty();
     }
 
 }

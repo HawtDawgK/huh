@@ -3,7 +3,6 @@ package post.api.rule34;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
-import io.netty.handler.codec.http.HttpStatusClass;
 import lombok.extern.slf4j.Slf4j;
 import post.api.PostFetchException;
 import post.autocomplete.AutocompleteException;
@@ -14,7 +13,6 @@ import post.api.PostApi;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;

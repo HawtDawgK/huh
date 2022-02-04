@@ -43,7 +43,7 @@ public class PostsCommand implements Command {
 
         String siteName = event.getOption("site")
                 .flatMap(o -> o.getValue().map(ApplicationCommandInteractionOptionValue::asString))
-                .orElse(PostSite.RULE34.getName());
+                .orElseThrow(() -> new CommandException("Site is required"));
 
         String tags = event.getOption("tags")
                 .flatMap(o -> o.getValue().map(ApplicationCommandInteractionOptionValue::asString))
