@@ -74,9 +74,13 @@ public class Rule34Api implements PostApi {
             return Arrays.stream(autocompleteResults)
                     .map(AutocompleteResult::toApplicationCommandOptionChoiceData)
                     .collect(Collectors.toList());
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new AutocompleteException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            log.error(e.getMessage(), e);
+            Thread.currentThread().interrupt();
+            throw new AutocompleteException(e.getMessage(), e);
         }
     }
 
@@ -108,7 +112,11 @@ public class Rule34Api implements PostApi {
             }
 
             return xmlMapper.readValue(response.body(), Rule34QueryResult.class);
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new PostFetchException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             log.error(e.getMessage(), e);
             throw new PostFetchException(e.getMessage(), e);
         }

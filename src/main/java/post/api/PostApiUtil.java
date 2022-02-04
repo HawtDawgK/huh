@@ -25,7 +25,6 @@ public class PostApiUtil {
     public static List<ApplicationCommandOptionChoiceData> autocomplete(String urlString) throws AutocompleteException {
         try {
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlString)).GET().build();
-
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
@@ -37,9 +36,11 @@ public class PostApiUtil {
             return Arrays.stream(autocompleteResults)
                     .map(AutocompleteResult::toApplicationCommandOptionChoiceData)
                     .collect(Collectors.toList());
-        } catch (IOException | InterruptedException e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new AutocompleteException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AutocompleteException(e.getMessage(), e);
         }
     }
 

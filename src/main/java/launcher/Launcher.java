@@ -24,7 +24,14 @@ import java.util.Map;
 @Slf4j
 public class Launcher {
 
-    private static final Map<String, Command> commandMap = createMap();
+    private static final Map<String, Command> commandMap = new HashMap<>();
+
+    static {
+        commandMap.put("posts", new PostsCommand());
+        commandMap.put("history", new HistoryCommand());
+        commandMap.put("favorites", new FavoritesCommand());
+        commandMap.values().forEach(CommandUtil::createCommand);
+    }
 
     public static void main(String[] args) {
         Flux<Void> ready = ClientWrapper.getClient().on(ReadyEvent.class, event -> {
@@ -62,17 +69,8 @@ public class Launcher {
 
             return Mono.empty();
         } catch (AutocompleteException e) {
+            log.error(e.getMessage(), e);
             return Mono.empty();
         }
-    }
-
-    private static HashMap<String, Command> createMap() {
-        HashMap<String, Command> tempCommandHashMap = new HashMap<>();
-        tempCommandHashMap.put("posts", new PostsCommand());
-        tempCommandHashMap.put("history", new HistoryCommand());
-        tempCommandHashMap.put("favorites", new FavoritesCommand());
-        tempCommandHashMap.values().forEach(CommandUtil::createCommand);
-
-        return tempCommandHashMap;
     }
 }
