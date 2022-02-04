@@ -38,9 +38,13 @@ public class DanbooruApi implements PostApi {
             }
 
             return Optional.of(objectMapper.readValue(response.body(), Post.class));
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new PostFetchException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error(e.getMessage(), e);
+            throw new PostFetchException(e.getMessage(), e);
         }
     }
 
@@ -63,14 +67,18 @@ public class DanbooruApi implements PostApi {
             }
 
             return Optional.of(posts[0]);
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new PostFetchException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error(e.getMessage(), e);
+            throw new PostFetchException(e.getMessage(), e);
         }
     }
 
     @Override
-    public int fetchCount(String tags) {
+    public int fetchCount(String tags) throws PostFetchException {
         try {
             String urlString = BASE_URL + "counts/posts.json?tags=" + tags;
 
@@ -81,8 +89,11 @@ public class DanbooruApi implements PostApi {
                     .readValue(response.body(), DanbooruCountsResponse.class);
 
             return danbooruCountsResponse.getCounts().getPosts();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new PostFetchException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PostFetchException(e.getMessage(), e);
         }
     }
 
