@@ -2,6 +2,7 @@ package post;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import embed.ErrorEmbed;
+import embed.PostEmbedOptions;
 import embed.PostNotFoundEmbed;
 import post.api.PostApi;
 import post.api.PostFetchException;
@@ -26,8 +27,20 @@ public class PostApiMessage extends PostMessage {
     @Override
     PostMessageable toPostMessageable() {
         try {
-            return getCurrentPost().map(post -> PostMessageable.fromPost(post, getPage(), getCount()))
-                    .orElseGet(() -> PostMessageable.fromEmbed(PostNotFoundEmbed.create(tags)));
+            Optional<Post> optionalPost = getCurrentPost();
+
+            if (optionalPost.isEmpty()) {
+                return PostMessageable.fromEmbed(PostNotFoundEmbed.create(tags));
+            }
+
+            Post currentPost = optionalPost.get();
+            PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
+                    .post(currentPost)
+                    .page(getPage())
+                    .count(getCount())
+                    .build();
+
+            return PostMessageable.fromPost(postEmbedOptions);
         } catch (PostFetchException e) {
             return PostMessageable.fromEmbed(ErrorEmbed.create("Error fetching post for tags " + tags));
         }

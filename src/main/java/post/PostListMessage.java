@@ -2,6 +2,7 @@ package post;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import embed.ErrorEmbed;
+import embed.PostEmbedOptions;
 import lombok.Getter;
 import post.api.PostFetchException;
 
@@ -9,8 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class PostListMessage extends PostMessage {
-
-    private static final String TITLE = "Favorites";
 
     @Getter
     private final List<PostResolvableEntry> postList;
@@ -35,9 +34,15 @@ public class PostListMessage extends PostMessage {
                 PostResolvableEntry currentEntry = postList.get(getPage());
 
                 String description = "Favorites for " + getEvent().getInteraction().getUser().getMention();
+                PostEmbedOptions options = PostEmbedOptions.builder()
+                        .post(post)
+                        .entry(currentEntry)
+                        .description(description)
+                        .page(getPage())
+                        .count(getCount())
+                        .build();
 
-                return PostMessageable.fromListPost(post, getPage(), getCount(),
-                        TITLE, description, currentEntry);
+                return PostMessageable.fromPost(options);
             }
 
             return PostMessageable.fromEmbed(ErrorEmbed.create("Could not fetch post"));

@@ -2,6 +2,7 @@ package post.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import post.autocomplete.AutocompleteException;
 import post.autocomplete.AutocompleteResult;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
+@UtilityClass
 public class PostApiUtil {
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();

@@ -1,7 +1,10 @@
 package util;
 
+import lombok.experimental.UtilityClass;
+
 import java.util.List;
 
+@UtilityClass
 public class Formats {
 
     public static final List<String> ANIMATED_FORMATS = List.of("mp4", "mov", "avi");

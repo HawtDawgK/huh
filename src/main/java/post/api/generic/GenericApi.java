@@ -66,7 +66,7 @@ public abstract class GenericApi implements PostApi {
     public List<ApplicationCommandOptionChoiceData> autocomplete(String input) throws AutocompleteException {
         String lastInput = PostApiUtil.getLastAutocompleteString(input);
         String urlString = getAutocompleteUrl(lastInput);
-        return PostApiUtil.autocomplete(urlString, lastInput);
+        return PostApiUtil.autocomplete(urlString, input);
     }
 
     private Optional<Post> getFirstPost(PostQueryResult queryResult) {

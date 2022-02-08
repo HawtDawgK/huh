@@ -2,33 +2,31 @@ package embed;
 
 import discord4j.core.spec.EmbedCreateFields.Footer;
 import discord4j.core.spec.EmbedCreateSpec;
-import post.Post;
-import post.PostResolvableEntry;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class PostMessageEmbed {
 
-    private PostMessageEmbed() {
+    public static EmbedCreateSpec fromPost(PostEmbedOptions options) {
+        EmbedCreateSpec.Builder embedBuilder = EmbedCreateSpec.builder();
 
-    }
+        if (options.getTitle() != null) {
+            embedBuilder.title(options.getTitle());
+        }
+        if (options.getDescription() != null) {
+            embedBuilder.description(options.getDescription());
+        }
 
-    public static EmbedCreateSpec fromListPost(Post post, PostResolvableEntry entry,
-                                               int page, int count, String title, String description) {
+        if (options.getEntry() != null) {
+            embedBuilder.timestamp(options.getEntry().getStoredAt());
+        } else {
+            embedBuilder.timestamp(options.getPost().getCreatedAt().toInstant());
+        }
 
-        return EmbedCreateSpec.builder().title("Post")
-                .title(title)
-                .description(description)
-                .image(post.getFileUrl())
-                .footer(toFooter(page, count, post.getScore()))
-                .timestamp(entry.getStoredAt())
-                .build();
-    }
+        embedBuilder.image(options.getPost().getFileUrl());
+        embedBuilder.footer(toFooter(options.getPage(), options.getCount(), options.getPost().getScore()));
 
-    public static EmbedCreateSpec fromPost(Post post, int page, int count) {
-        return EmbedCreateSpec.builder().title("Post")
-                .image(post.getFileUrl())
-                .footer(toFooter(page, count, post.getScore()))
-                .timestamp(post.getCreatedAt().toInstant())
-                .build();
+        return embedBuilder.build();
     }
 
     private static Footer toFooter(int page, int count, long score) {

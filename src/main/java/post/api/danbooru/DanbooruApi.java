@@ -12,6 +12,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.Optional;
 
 @Slf4j
@@ -84,11 +85,7 @@ public class DanbooruApi extends GenericApi {
 
             DanbooruPost[] posts = objectMapper.readValue(response.body(), DanbooruPost[].class);
 
-            if (posts.length == 0) {
-                return Optional.empty();
-            }
-
-            return Optional.of(posts[0]);
+            return Arrays.stream(posts).findFirst().map(x -> x);
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new PostFetchException(e.getMessage(), e);

@@ -3,9 +3,11 @@ package post;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
 import discord4j.core.object.component.LayoutComponent;
+import lombok.experimental.UtilityClass;
 
 import java.util.List;
 
+@UtilityClass
 public class PostMessageButtons {
 
     private static final ActionRow PAGE_ROW = ActionRow.of(Button.primary("next-page", "Next page"),

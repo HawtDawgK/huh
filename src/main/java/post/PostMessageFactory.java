@@ -7,6 +7,7 @@ import embed.ErrorEmbed;
 import embed.PostNotFoundEmbed;
 import enums.PostSite;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import post.api.PostApi;
 import post.api.PostFetchException;
@@ -17,9 +18,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Slf4j
+@UtilityClass
 public class PostMessageFactory {
-
-    private PostMessageFactory() { }
 
     public static Mono<Void> createPost(ChatInputInteractionEvent event, String tags, PostSite postSite) throws PostFetchException {
         PostApi postApi = postSite.getPostApi();
