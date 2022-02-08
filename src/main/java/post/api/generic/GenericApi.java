@@ -42,7 +42,7 @@ public abstract class GenericApi implements PostApi {
     @Override
     public int fetchCount(String tags) throws PostFetchException {
         String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=0&tags=" + tags;
-        PostQueryResult postQueryResult = getResult(urlString);
+        PostQueryResult postQueryResult = getPosts(urlString);
 
         return postQueryResult.getCount();
     }
@@ -50,19 +50,16 @@ public abstract class GenericApi implements PostApi {
     @Override
     public Optional<Post> fetchById(long id) throws PostFetchException {
         String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=1&id=" + id;
-        PostQueryResult queryResult = getResult(urlString);
+        PostQueryResult queryResult = getPosts(urlString);
         return getFirstPost(queryResult);
     }
 
     @Override
     public Optional<Post> fetchByTagsAndPage(String tags, int page) throws PostFetchException {
         String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=1&tags=" + tags + "&pid=" + page;
-        PostQueryResult queryResult = getResult(urlString);
+        PostQueryResult queryResult = getPosts(urlString);
 
-        Optional<Post> post = getFirstPost(queryResult);
-        post.ifPresent(p -> p.setSite(getSite()));
-
-        return post;
+        return getFirstPost(queryResult);
     }
 
     @Override
@@ -73,13 +70,15 @@ public abstract class GenericApi implements PostApi {
     }
 
     private Optional<Post> getFirstPost(PostQueryResult queryResult) {
-        return queryResult.getPosts().stream().findFirst().map(x -> {
+        Optional<GenericPost> optionalPost = queryResult.getPosts().stream().findFirst();
+
+        return optionalPost.map(x -> {
             x.setSite(getSite());
             return x;
         });
     }
 
-    private PostQueryResult getResult(String urlString) throws PostFetchException {
+    private PostQueryResult getPosts(String urlString) throws PostFetchException {
         try {
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlString)).GET().build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());

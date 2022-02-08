@@ -6,10 +6,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import enums.PostSite;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.Nullable;
 import util.Formats;
 
-import java.time.Instant;
 import java.util.Date;
 
 @Getter
@@ -41,8 +39,8 @@ public abstract class Post {
         return Formats.isAnimated(fileExt);
     }
 
-
-    public PostResolvableEntry toPostResolvableEntry() {
-        return new PostResolvableEntry(getId(), getSite(), Instant.now());
+    public PostResolvable toPostResolvable() {
+        return new PostResolvable(getId(), getSite());
     }
+
 }

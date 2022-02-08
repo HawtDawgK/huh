@@ -6,13 +6,17 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.component.LayoutComponent;
 import discord4j.core.object.entity.User;
 import embed.ErrorEmbed;
+import post.Post;
 import post.PostListMessage;
 import post.PostMessageButtons;
 import post.PostResolvableEntry;
+import post.api.PostFetchException;
+import post.history.PostHistory;
 import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 public class FavoritesMessage extends PostListMessage {
 
@@ -29,6 +33,14 @@ public class FavoritesMessage extends PostListMessage {
     }
 
     @Override
+    public Optional<Post> getCurrentPost() throws PostFetchException {
+        Optional<Post> optionalPost = super.getCurrentPost();
+
+        optionalPost.ifPresent(post -> PostHistory.addPost(getEvent().getInteraction().getChannel().block(), post));
+        return optionalPost;
+    }
+
+    @Override
     public Mono<Void> handleInteraction(ButtonInteractionEvent buttonInteractionEvent) {
         if (buttonInteractionEvent.getCustomId().equals("delete-favorite")) {
             return removeFavorite(buttonInteractionEvent);
@@ -41,7 +53,9 @@ public class FavoritesMessage extends PostListMessage {
         User reactingUser = buttonInteractionEvent.getInteraction().getUser();
 
         if (!reactingUser.equals(user)) {
-            return Mono.empty();
+            return buttonInteractionEvent
+                    .reply("Only the author can delete a favorite.")
+                    .withEphemeral(true);
         }
 
         try {
@@ -52,4 +66,5 @@ public class FavoritesMessage extends PostListMessage {
             return buttonInteractionEvent.reply().withEmbeds(ErrorEmbed.create("Error removing favorite"));
         }
     }
+
 }

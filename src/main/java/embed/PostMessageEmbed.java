@@ -2,10 +2,8 @@ package embed;
 
 import discord4j.core.spec.EmbedCreateFields.Footer;
 import discord4j.core.spec.EmbedCreateSpec;
-import org.jetbrains.annotations.Nullable;
 import post.Post;
-
-import java.time.Instant;
+import post.PostResolvableEntry;
 
 public class PostMessageEmbed {
 
@@ -13,20 +11,28 @@ public class PostMessageEmbed {
 
     }
 
-    public static EmbedCreateSpec toEmbed(Post post, int page, int count, @Nullable Instant instant) {
-        String footerText = String.format("Page %d of %d \u2022 Score: %d", page, count, post.getScore());
+    public static EmbedCreateSpec fromListPost(Post post, PostResolvableEntry entry,
+                                               int page, int count, String title, String description) {
 
-        EmbedCreateSpec.Builder builder = EmbedCreateSpec.builder().title("Post")
+        return EmbedCreateSpec.builder().title("Post")
+                .title(title)
+                .description(description)
                 .image(post.getFileUrl())
-                .footer(Footer.of(footerText, null));
+                .footer(toFooter(page, count, post.getScore()))
+                .timestamp(entry.getStoredAt())
+                .build();
+    }
 
-        if (instant != null) {
-            builder.timestamp(instant);
-        } else {
-            builder.timestamp(post.getCreatedAt().toInstant());
-        }
+    public static EmbedCreateSpec fromPost(Post post, int page, int count) {
+        return EmbedCreateSpec.builder().title("Post")
+                .image(post.getFileUrl())
+                .footer(toFooter(page, count, post.getScore()))
+                .timestamp(post.getCreatedAt().toInstant())
+                .build();
+    }
 
-        return builder.build();
+    private static Footer toFooter(int page, int count, long score) {
+        return Footer.of(String.format("Page %d of %d \u2022 Score: %d", page + 1, count, score), null);
     }
 
 }

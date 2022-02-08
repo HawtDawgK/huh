@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public class PostListMessage extends PostMessage {
 
+    private static final String TITLE = "Favorites";
+
     @Getter
     private final List<PostResolvableEntry> postList;
 
@@ -26,9 +28,19 @@ public class PostListMessage extends PostMessage {
     @Override
     PostMessageable toPostMessageable() {
         try {
-            PostResolvableEntry currentEntry = postList.get(0);
-            return getCurrentPost().map(post -> PostMessageable.fromPost(post, getPage(), getCount(), currentEntry.getStoredAt()))
-                    .orElseGet(() -> PostMessageable.fromEmbed(ErrorEmbed.create("Could not fetch post")));
+            Optional<Post> optionalPost = getCurrentPost();
+
+            if (optionalPost.isPresent()) {
+                Post post = optionalPost.get();
+                PostResolvableEntry currentEntry = postList.get(getPage());
+
+                String description = "Favorites for " + getEvent().getInteraction().getUser().getMention();
+
+                return PostMessageable.fromListPost(post, getPage(), getCount(),
+                        TITLE, description, currentEntry);
+            }
+
+            return PostMessageable.fromEmbed(ErrorEmbed.create("Could not fetch post"));
         } catch (PostFetchException e) {
             return PostMessageable.fromEmbed(ErrorEmbed.create("Error fetching post"));
         }

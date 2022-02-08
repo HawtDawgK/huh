@@ -4,6 +4,7 @@ import api.ClientWrapper;
 import discord4j.core.object.entity.User;
 import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
+import post.PostResolvable;
 import post.PostResolvableEntry;
 
 import java.io.IOException;
@@ -62,18 +63,18 @@ public class PostRepository {
         }
     }
 
-    public static void addFavorite(User user, PostResolvableEntry entry) throws SQLException {
+    public static void addFavorite(User user, PostResolvable resolvable) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
                 Statement stmt = con.createStatement()
         ) {
-            if (hasFavorite(user, entry)) {
+            if (hasFavorite(user, resolvable)) {
                 return;
             }
 
             String query = String.format("INSERT INTO post (user_id, post_id, site_name, stored_at)" +
                             " VALUES (%d, %d, \"%s\", NOW())",
-                    user.getId().asLong(), entry.getPostId(), entry.getPostSite().getName());
+                    user.getId().asLong(), resolvable.getPostId(), resolvable.getPostSite().getName());
 
             stmt.executeUpdate(query);
         } catch (SQLException e) {
@@ -102,14 +103,14 @@ public class PostRepository {
         }
     }
 
-    public static boolean hasFavorite(User user, PostResolvableEntry entry) throws SQLException {
+    public static boolean hasFavorite(User user, PostResolvable resolvable) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
                 Statement stmt = con.createStatement()
         ) {
             String query = String.format("SELECT * FROM post " +
                             " WHERE user_id = %d AND post_id = %d AND site_name = \"%s\";",
-                    user.getId().asLong(), entry.getPostId(), entry.getPostSite().getName());
+                    user.getId().asLong(), resolvable.getPostId(), resolvable.getPostSite().getName());
 
             ResultSet rs = stmt.executeQuery(query);
             return rs.next();

@@ -72,14 +72,14 @@ public abstract class PostMessage {
                 return Mono.empty();
             }
 
-            PostResolvableEntry currentEntry = optionalPost.get().toPostResolvableEntry();
+            PostResolvable currentResolvable = optionalPost.get().toPostResolvable();
             User user = event.getInteraction().getUser();
 
-            if (PostRepository.hasFavorite(user, currentEntry)) {
+            if (PostRepository.hasFavorite(user, currentResolvable)) {
                 return event.reply("Already stored as favorite.").withEphemeral(true);
             }
 
-            PostRepository.addFavorite(user, currentEntry);
+            PostRepository.addFavorite(user, currentResolvable);
             return event.reply("Successfully stored favorite.").withEphemeral(true);
         } catch (SQLException | PostFetchException e) {
             log.error(e.getMessage(), e);
@@ -94,7 +94,17 @@ public abstract class PostMessage {
             return addFavorite(buttonInteractionEvent);
         }
         if (customId.equals("delete-message")) {
-            return deleteMessage();
+            User reactingUser = buttonInteractionEvent.getInteraction().getUser();
+            User author = event.getInteraction().getUser();
+
+            // Only author can delete the message
+            if (reactingUser.equals(author)) {
+                return deleteMessage();
+            }
+
+            return buttonInteractionEvent
+                    .reply("Only the author can delete this message")
+                    .withEphemeral(true);
         }
 
         switch (customId) {
