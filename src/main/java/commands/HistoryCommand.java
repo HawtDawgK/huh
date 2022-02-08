@@ -7,7 +7,7 @@ import embed.ErrorEmbed;
 import post.PostListMessage;
 import post.PostMessage;
 import post.PostMessages;
-import post.PostResolvable;
+import post.PostResolvableEntry;
 import post.history.PostHistory;
 import reactor.core.publisher.Mono;
 
@@ -28,7 +28,7 @@ public class HistoryCommand implements Command {
         CommandUtil.checkNsfwChannel(event);
 
         MessageChannel messageChannel = event.getInteraction().getChannel().block();
-        List<PostResolvable> postHistoryFromChannel = PostHistory.getHistory(messageChannel);
+        List<PostResolvableEntry> postHistoryFromChannel = PostHistory.getHistory(messageChannel);
 
         if (postHistoryFromChannel.isEmpty()) {
             return event.reply().withEmbeds(ErrorEmbed.create("No posts in history."));

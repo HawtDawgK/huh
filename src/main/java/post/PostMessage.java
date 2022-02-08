@@ -9,6 +9,7 @@ import discord4j.core.spec.*;
 import embed.ErrorEmbed;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import post.api.PostFetchException;
 import reactor.core.publisher.Mono;
@@ -20,6 +21,7 @@ import java.util.Random;
 
 @Slf4j
 @Getter
+@Setter
 @RequiredArgsConstructor
 public abstract class PostMessage {
 
@@ -36,15 +38,15 @@ public abstract class PostMessage {
     abstract int getCount();
 
     void nextPage() {
-        page = (page + 1) % getCount();
+        page = Math.floorMod(page + 1, getCount());
     }
 
     void previousPage() {
-        page = (page - 1) % getCount();
+        page = Math.floorMod(page - 1, getCount());
     }
 
     void randomPage() {
-        page = random.nextInt(getCount() + 1);
+        page = random.nextInt(getCount());
     }
 
     void updatePost(ButtonInteractionEvent buttonInteractionEvent) {
@@ -59,7 +61,7 @@ public abstract class PostMessage {
 
         return edit.withContentOrNull(postMessageable.getContent())
                 .withEmbeds(postMessageable.getEmbed())
-                .withComponents(PostMessageButtons.actionRow().toArray(LayoutComponent[]::new));
+                .withComponents(getButtons().toArray(LayoutComponent[]::new));
     }
 
     private Mono<Void> addFavorite(ButtonInteractionEvent event) {
@@ -70,14 +72,14 @@ public abstract class PostMessage {
                 return Mono.empty();
             }
 
-            Post currentPost = optionalPost.get();
+            PostResolvableEntry currentEntry = optionalPost.get().toPostResolvableEntry();
             User user = event.getInteraction().getUser();
 
-            if (PostRepository.hasFavorite(user, currentPost)) {
+            if (PostRepository.hasFavorite(user, currentEntry)) {
                 return event.reply("Already stored as favorite.").withEphemeral(true);
             }
 
-            PostRepository.addFavorite(user, currentPost);
+            PostRepository.addFavorite(user, currentEntry);
             return event.reply("Successfully stored favorite.").withEphemeral(true);
         } catch (SQLException | PostFetchException e) {
             log.error(e.getMessage(), e);
@@ -86,16 +88,19 @@ public abstract class PostMessage {
     }
 
     public Mono<Void> handleInteraction(ButtonInteractionEvent buttonInteractionEvent) {
-        switch (buttonInteractionEvent.getCustomId()) {
+        String customId = buttonInteractionEvent.getCustomId();
+
+        if (customId.equals("add-favorite")) {
+            return addFavorite(buttonInteractionEvent);
+        }
+        if (customId.equals("delete-message")) {
+            return deleteMessage();
+        }
+
+        switch (customId) {
             case "next-page" -> nextPage();
             case "random-page" -> randomPage();
             case "previous-page" -> previousPage();
-            case "add-favorite" -> {
-                return addFavorite(buttonInteractionEvent);
-            }
-            case "delete-message" -> {
-                return deleteMessage();
-            }
             default -> log.warn("Received invalid interaction id " + buttonInteractionEvent.getCustomId());
         }
 

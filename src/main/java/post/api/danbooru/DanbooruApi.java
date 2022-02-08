@@ -1,29 +1,51 @@
 package post.api.danbooru;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
+import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
 import post.Post;
-import post.api.PostApi;
-import post.api.PostApiUtil;
 import post.api.PostFetchException;
-import post.autocomplete.AutocompleteException;
+import post.api.generic.GenericApi;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class DanbooruApi implements PostApi {
+public class DanbooruApi extends GenericApi {
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final String BASE_URL = "https://danbooru.donmai.us/";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Override
+    public String getBaseUrl() {
+        return BASE_URL;
+    }
+
+    @Override
+    public PostSite getSite() {
+        return PostSite.DANBOORU;
+    }
+
+    @Override
+    public boolean hasAutocomplete() {
+        return true;
+    }
+
+    @Override
+    public String getAutocompleteUrl(String tags) {
+        return BASE_URL + "autocomplete.json?search%5Bquery%5D=" + tags + "&search%5Btype%5D=tag_query&limit=10";
+    }
+
+    @Override
+    public Optional<Integer> getMaxCount() {
+        return Optional.empty();
+    }
 
     @Override
     public Optional<Post> fetchById(long id) throws PostFetchException {
@@ -37,7 +59,7 @@ public class DanbooruApi implements PostApi {
                 throw new PostFetchException("Could not fetch post");
             }
 
-            return Optional.of(objectMapper.readValue(response.body(), Post.class));
+            return Optional.of(objectMapper.readValue(response.body(), DanbooruPost.class));
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new PostFetchException(e.getMessage(), e);
@@ -97,21 +119,4 @@ public class DanbooruApi implements PostApi {
         }
     }
 
-    @Override
-    public boolean hasAutocomplete() {
-        return true;
-    }
-
-    @Override
-    public List<ApplicationCommandOptionChoiceData> autocomplete(String input) throws AutocompleteException {
-        String urlString =  BASE_URL + "autocomplete.json?search%5Bquery%5D="
-                + input + "&search%5Btype%5D=tag_query&limit=10";
-
-        return PostApiUtil.autocomplete(urlString);
-    }
-
-    @Override
-    public int getMaxCount() {
-        return Integer.MAX_VALUE;
-    }
 }

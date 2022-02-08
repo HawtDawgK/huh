@@ -6,16 +6,19 @@ import lombok.RequiredArgsConstructor;
 import post.api.PostFetchException;
 import post.cache.PostCache;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
+@Getter
 @RequiredArgsConstructor
-public class PostResolvable {
+public class PostResolvableEntry {
 
     private final long postId;
 
-    @Getter
     private final PostSite postSite;
+
+    private final Instant storedAt;
 
     public Optional<Post> resolve() throws PostFetchException {
         Post cachedPost = PostCache.get(this);
@@ -29,19 +32,23 @@ public class PostResolvable {
 
     @Override
     public String toString() {
-        return "PostResolvable{id=" + postId + ", postApi=" + postSite + '}';
+        return "PostResolvableEntry{" +
+                "postId=" + postId +
+                ", postSite=" + postSite +
+                ", storedAt=" + storedAt +
+                '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PostResolvable that = (PostResolvable) o;
-        return postId == that.postId && postSite == that.postSite;
+        PostResolvableEntry that = (PostResolvableEntry) o;
+        return postId == that.postId && postSite == that.postSite && Objects.equals(storedAt, that.storedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(postId, postSite);
+        return Objects.hash(postId, postSite, storedAt);
     }
 }

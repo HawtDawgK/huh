@@ -50,17 +50,18 @@ public class Launcher {
         try {
             return commandMap.get(event.getCommandName()).apply(event);
         } catch (CommandException| PostFetchException e) {
+            log.error(e.getMessage(), e);
             return event.reply().withEmbeds(ErrorEmbed.create(e.getMessage()));
         }
     }
 
     private static Mono<Void> handleAutocomplete(ChatInputAutoCompleteEvent event) {
-        PostSite postSite = PostSite.findByName(event.getOption("site")
-                .map(ApplicationCommandInteractionOption::getValue)
-                .flatMap(x -> x.map(ApplicationCommandInteractionOptionValue::asString))
-                .orElse(PostSite.RULE34.getName()));
-
         try {
+            PostSite postSite = PostSite.findByName(event.getOption("site")
+                    .map(ApplicationCommandInteractionOption::getValue)
+                    .flatMap(x -> x.map(ApplicationCommandInteractionOptionValue::asString))
+                    .orElseThrow(() -> new AutocompleteException("Invalid site")));
+
             if (postSite.getPostApi().hasAutocomplete()) {
                 List<ApplicationCommandOptionChoiceData> list = postSite.getPostApi().autocomplete(
                         event.getFocusedOption().getValue().map(ApplicationCommandInteractionOptionValue::asString).orElse(""));

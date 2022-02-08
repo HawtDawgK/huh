@@ -22,7 +22,17 @@ public class PostApiUtil {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public static List<ApplicationCommandOptionChoiceData> autocomplete(String urlString) throws AutocompleteException {
+    public static String getLastAutocompleteString(String autocompleteInput) {
+        String[] parts = autocompleteInput.split(" ");
+
+        if (parts.length == 0) {
+            return "";
+        }
+
+        return parts[parts.length - 1];
+    }
+
+    public static List<ApplicationCommandOptionChoiceData> autocomplete(String urlString, String oldInput) throws AutocompleteException {
         try {
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlString)).GET().build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
@@ -34,7 +44,7 @@ public class PostApiUtil {
             AutocompleteResult[] autocompleteResults = OBJECT_MAPPER.readValue(response.body(), AutocompleteResult[].class);
 
             return Arrays.stream(autocompleteResults)
-                    .map(AutocompleteResult::toApplicationCommandOptionChoiceData)
+                    .map(res -> res.toApplicationCommandOptionChoiceData(oldInput))
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new AutocompleteException(e.getMessage(), e);

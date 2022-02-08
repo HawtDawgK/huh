@@ -1,4 +1,4 @@
-package post;
+package post.favorites;
 
 import db.PostRepository;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
@@ -6,18 +6,19 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.component.LayoutComponent;
 import discord4j.core.object.entity.User;
 import embed.ErrorEmbed;
-import post.api.PostFetchException;
+import post.PostListMessage;
+import post.PostMessageButtons;
+import post.PostResolvableEntry;
 import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
 public class FavoritesMessage extends PostListMessage {
 
     private final User user;
 
-    public FavoritesMessage(List<PostResolvable> postList, User user, ChatInputInteractionEvent event) {
+    public FavoritesMessage(List<PostResolvableEntry> postList, User user, ChatInputInteractionEvent event) {
         super(postList, event);
         this.user = user;
     }
@@ -44,16 +45,9 @@ public class FavoritesMessage extends PostListMessage {
         }
 
         try {
-            Optional<Post> optionalPost = getCurrentPost();
-
-            if (optionalPost.isEmpty()) {
-                return Mono.empty();
-            }
-
-            PostRepository.removeFavorite(reactingUser, optionalPost.get());
+            PostResolvableEntry postResolvableEntry = getPostList().get(getPage());
+            PostRepository.removeFavorite(reactingUser, postResolvableEntry);
             return buttonInteractionEvent.reply("Successfully removed favorite.").withEphemeral(true);
-        } catch (PostFetchException e) {
-            return buttonInteractionEvent.reply().withEmbeds(ErrorEmbed.create("Error fetching post"));
         }  catch (SQLException e) {
             return buttonInteractionEvent.reply().withEmbeds(ErrorEmbed.create("Error removing favorite"));
         }

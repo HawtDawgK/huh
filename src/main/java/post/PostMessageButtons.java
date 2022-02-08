@@ -22,7 +22,7 @@ public class PostMessageButtons {
     public static List<LayoutComponent> actionRowFavorites() {
         ActionRow row2 = ActionRow.of(Button.success("add-favorite", "Favorite"),
                 Button.danger("delete-message", "Delete message"),
-                Button.danger("delete-favorite", "Rmtest"));
+                Button.danger("delete-favorite", "Remove favorite"));
 
         return List.of(PAGE_ROW, row2);
     }

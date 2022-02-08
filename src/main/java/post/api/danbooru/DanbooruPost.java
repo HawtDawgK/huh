@@ -12,7 +12,6 @@ import post.Post;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class DanbooruPost extends Post {
 
-
     @Override
     public PostSite getSite() {
         return PostSite.DANBOORU;

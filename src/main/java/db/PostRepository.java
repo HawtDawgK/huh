@@ -4,12 +4,12 @@ import api.ClientWrapper;
 import discord4j.core.object.entity.User;
 import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
-import post.Post;
-import post.PostResolvable;
+import post.PostResolvableEntry;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -38,19 +38,21 @@ public class PostRepository {
         }
     }
 
-    public static List<PostResolvable> getFavorites(long userId) throws SQLException {
+    public static List<PostResolvableEntry> getFavorites(long userId) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
                 Statement stmt = con.createStatement()
         ) {
-            ResultSet rs = stmt.executeQuery("select * from post where user_id = " + userId);
-            List<PostResolvable> favorites = new ArrayList<>();
+            String statement = String.format("select * from post where user_id = %d order by stored_at", userId);
+            ResultSet rs = stmt.executeQuery(statement);
+            List<PostResolvableEntry> favorites = new ArrayList<>();
 
             while (rs.next()) {
                 long postId = rs.getLong(2);
                 String site = rs.getString(3);
+                Instant storedAt = rs.getTimestamp(4).toInstant();
 
-                favorites.add(new PostResolvable(postId, PostSite.findByName(site)));
+                favorites.add(new PostResolvableEntry(postId, PostSite.findByName(site), storedAt));
             }
 
             return favorites;
@@ -60,17 +62,18 @@ public class PostRepository {
         }
     }
 
-    public static void addFavorite(User user, Post post) throws SQLException {
+    public static void addFavorite(User user, PostResolvableEntry entry) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
                 Statement stmt = con.createStatement()
         ) {
-            if (hasFavorite(user, post)) {
+            if (hasFavorite(user, entry)) {
                 return;
             }
 
-            String query = String.format("INSERT INTO post (user_id, post_id, site_name) VALUES (%d, %d, \"%s\")",
-                    user.getId().asLong(), post.getId(), post.getSite().getName());
+            String query = String.format("INSERT INTO post (user_id, post_id, site_name, stored_at)" +
+                            " VALUES (%d, %d, \"%s\", NOW())",
+                    user.getId().asLong(), entry.getPostId(), entry.getPostSite().getName());
 
             stmt.executeUpdate(query);
         } catch (SQLException e) {
@@ -79,18 +82,18 @@ public class PostRepository {
         }
     }
 
-    public static void removeFavorite(User user, Post post) throws SQLException {
+    public static void removeFavorite(User user, PostResolvableEntry entry) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
                 Statement stmt = con.createStatement()
         ) {
-            if (!hasFavorite(user, post)) {
+            if (!hasFavorite(user, entry)) {
                 return;
             }
 
             String query = String.format("DELETE FROM post " +
                             "WHERE user_id = %d AND post_id = %d AND site_name = \"%s\";",
-                    user.getId().asLong(), post.getId(), post.getSite().getName());
+                    user.getId().asLong(), entry.getPostId(), entry.getPostSite().getName());
 
             stmt.executeUpdate(query);
         } catch (SQLException e) {
@@ -99,14 +102,14 @@ public class PostRepository {
         }
     }
 
-    public static boolean hasFavorite(User user, Post post) throws SQLException {
+    public static boolean hasFavorite(User user, PostResolvableEntry entry) throws SQLException {
         try (
                 Connection con = DriverManager.getConnection(DB_URL + DB_NAME, USER, PASSWORD);
                 Statement stmt = con.createStatement()
         ) {
             String query = String.format("SELECT * FROM post " +
                             " WHERE user_id = %d AND post_id = %d AND site_name = \"%s\";",
-                    user.getId().asLong(), post.getId(), post.getSite().getName());
+                    user.getId().asLong(), entry.getPostId(), entry.getPostSite().getName());
 
             ResultSet rs = stmt.executeQuery(query);
             return rs.next();

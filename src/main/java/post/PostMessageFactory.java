@@ -10,6 +10,7 @@ import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
 import post.api.PostApi;
 import post.api.PostFetchException;
+import post.favorites.FavoritesMessage;
 import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
@@ -28,7 +29,7 @@ public class PostMessageFactory {
             return event.reply().withEmbeds(PostNotFoundEmbed.create(tags));
         }
 
-        int maxCount = Math.min(count, postApi.getMaxCount());
+        int maxCount = postApi.getMaxCount().map(c -> Math.min(c, count)).orElse(count);
 
         PostMessage postMessage = new PostApiMessage(event, postApi, tags, maxCount);
         postMessage.initReply();
@@ -40,7 +41,7 @@ public class PostMessageFactory {
 
     public static Mono<Void> createListPostFromFavorites(ChatInputInteractionEvent event, User user) {
         try {
-            List<PostResolvable> favorites = PostRepository.getFavorites(user.getId().asLong());
+            List<PostResolvableEntry> favorites = PostRepository.getFavorites(user.getId().asLong());
 
             if (favorites.isEmpty()) {
                 return event.reply().withEmbeds(ErrorEmbed.create("No favorites found."));

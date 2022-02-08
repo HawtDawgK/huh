@@ -1,7 +1,6 @@
-package post.api.rule34;
+package post.api.generic;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import enums.PostSite;
 import lombok.Getter;
 import lombok.Setter;
 import post.Post;
@@ -11,13 +10,9 @@ import java.util.Date;
 
 @Getter
 @Setter
-public class Rule34Post extends Post {
+public class GenericPost extends Post {
 
     @JsonDeserialize(using = CustomDateDeserializer.class)
     private Date createdAt;
 
-    @Override
-    public PostSite getSite() {
-        return PostSite.RULE34;
-    }
 }

@@ -12,10 +12,10 @@ public class AutocompleteResult {
 
     private String value;
 
-    public ApplicationCommandOptionChoiceData toApplicationCommandOptionChoiceData() {
+    public ApplicationCommandOptionChoiceData toApplicationCommandOptionChoiceData(String originalInput) {
         return ApplicationCommandOptionChoiceData.builder()
-                .name(label)
-                .value(value)
+                .name(originalInput + label)
+                .value(originalInput + value)
                 .build();
     }
 }

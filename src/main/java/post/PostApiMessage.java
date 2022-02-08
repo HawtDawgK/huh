@@ -21,12 +21,13 @@ public class PostApiMessage extends PostMessage {
         this.postApi = postApi;
         this.tags = tags;
         this.count = count;
+        setPage(1);
     }
 
     @Override
     PostMessageable toPostMessageable() {
         try {
-            return getCurrentPost().map(post -> PostMessageable.fromPost(post, getPage(), getCount()))
+            return getCurrentPost().map(post -> PostMessageable.fromPost(post, getPage(), getCount(), null))
                     .orElseGet(() -> PostMessageable.fromEmbed(PostNotFoundEmbed.create(tags)));
         } catch (PostFetchException e) {
             return PostMessageable.fromEmbed(ErrorEmbed.create("Error fetching post for tags " + tags));

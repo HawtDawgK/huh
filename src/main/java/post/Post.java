@@ -9,8 +9,8 @@ import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 import util.Formats;
 
+import java.time.Instant;
 import java.util.Date;
-import java.util.Optional;
 
 @Getter
 @Setter
@@ -32,8 +32,6 @@ public abstract class Post {
 
     private Date createdAt;
 
-    private @Nullable PostMetadata postMetadata;
-
     private PostSite site;
 
     public boolean isAnimated() {
@@ -43,11 +41,8 @@ public abstract class Post {
         return Formats.isAnimated(fileExt);
     }
 
-    public Optional<PostMetadata> getPostMetadata() {
-        return Optional.ofNullable(postMetadata);
-    }
 
-    public void setPostMetadata(@Nullable PostMetadata postMetadata) {
-       this.postMetadata = postMetadata;
+    public PostResolvableEntry toPostResolvableEntry() {
+        return new PostResolvableEntry(getId(), getSite(), Instant.now());
     }
 }

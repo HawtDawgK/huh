@@ -11,9 +11,9 @@ import java.util.Optional;
 public class PostListMessage extends PostMessage {
 
     @Getter
-    private final List<PostResolvable> postList;
+    private final List<PostResolvableEntry> postList;
 
-    public PostListMessage(List<PostResolvable> postList, ChatInputInteractionEvent event) {
+    public PostListMessage(List<PostResolvableEntry> postList, ChatInputInteractionEvent event) {
         super(event);
         this.postList = postList;
     }
@@ -26,7 +26,8 @@ public class PostListMessage extends PostMessage {
     @Override
     PostMessageable toPostMessageable() {
         try {
-            return getCurrentPost().map(post -> PostMessageable.fromPost(post, getPage(), getCount()))
+            PostResolvableEntry currentEntry = postList.get(0);
+            return getCurrentPost().map(post -> PostMessageable.fromPost(post, getPage(), getCount(), currentEntry.getStoredAt()))
                     .orElseGet(() -> PostMessageable.fromEmbed(ErrorEmbed.create("Could not fetch post")));
         } catch (PostFetchException e) {
             return PostMessageable.fromEmbed(ErrorEmbed.create("Error fetching post"));
