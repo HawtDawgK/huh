@@ -94,17 +94,7 @@ public abstract class PostMessage {
             return addFavorite(buttonInteractionEvent);
         }
         if (customId.equals("delete-message")) {
-            User reactingUser = buttonInteractionEvent.getInteraction().getUser();
-            User author = event.getInteraction().getUser();
-
-            // Only author can delete the message
-            if (reactingUser.equals(author)) {
-                return deleteMessage();
-            }
-
-            return buttonInteractionEvent
-                    .reply("Only the author can delete this message")
-                    .withEphemeral(true);
+            return deleteMessage(buttonInteractionEvent);
         }
 
         switch (customId) {
@@ -118,7 +108,17 @@ public abstract class PostMessage {
         return Mono.empty();
     }
 
-    private Mono<Void> deleteMessage() {
+    private Mono<Void> deleteMessage(ButtonInteractionEvent buttonInteractionEvent) {
+        User reactingUser = buttonInteractionEvent.getInteraction().getUser();
+        User author = event.getInteraction().getUser();
+
+        // Only author can delete the message
+        if (!reactingUser.equals(author)) {
+            return buttonInteractionEvent
+                    .reply("Only the author can delete this message")
+                    .withEphemeral(true);
+        }
+
         PostMessages.removePost(this);
         return event.deleteReply();
     }

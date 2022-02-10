@@ -2,10 +2,11 @@ package post.autocomplete;
 
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 public class AutocompleteResponse {
 
-    private List<AutocompleteResult> resultList;
+    private final List<AutocompleteResult> resultList = new ArrayList<>();
 }

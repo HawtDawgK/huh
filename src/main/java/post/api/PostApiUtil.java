@@ -24,6 +24,10 @@ public class PostApiUtil {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    public static String encodeSpaces(String tags) {
+        return tags.replace(' ', '+');
+    }
+
     public static String getLastAutocompleteString(String autocompleteInput) {
         String[] parts = autocompleteInput.split(" ");
 

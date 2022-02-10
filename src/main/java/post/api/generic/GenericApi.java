@@ -41,7 +41,8 @@ public abstract class GenericApi implements PostApi {
 
     @Override
     public int fetchCount(String tags) throws PostFetchException {
-        String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=0&tags=" + tags;
+        String encodedTags = PostApiUtil.encodeSpaces(tags);
+        String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=0&tags=" + encodedTags;
         PostQueryResult postQueryResult = getPosts(urlString);
 
         return postQueryResult.getCount();
@@ -56,7 +57,10 @@ public abstract class GenericApi implements PostApi {
 
     @Override
     public Optional<Post> fetchByTagsAndPage(String tags, int page) throws PostFetchException {
-        String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=1&tags=" + tags + "&pid=" + page;
+        String encodedTags = PostApiUtil.encodeSpaces(tags);
+
+        String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=1&tags="
+                + encodedTags + "&pid=" + page;
         PostQueryResult queryResult = getPosts(urlString);
 
         return getFirstPost(queryResult);
