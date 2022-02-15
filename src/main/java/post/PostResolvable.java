@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import post.api.PostFetchException;
 import post.cache.PostCache;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Getter
@@ -25,4 +26,18 @@ public class PostResolvable {
 
         return postSite.getPostApi().fetchById(postId);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PostResolvable that = (PostResolvable) o;
+        return postId == that.postId && postSite == that.postSite;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(postId, postSite);
+    }
+
 }

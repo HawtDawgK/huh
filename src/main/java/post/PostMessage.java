@@ -15,9 +15,7 @@ import post.api.PostFetchException;
 import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Slf4j
 @Getter
@@ -49,7 +47,7 @@ public abstract class PostMessage {
         page = random.nextInt(getCount());
     }
 
-    void updatePost(ButtonInteractionEvent buttonInteractionEvent) {
+    public void updatePost(ButtonInteractionEvent buttonInteractionEvent) {
         InteractionReplyEditMono edit = buttonInteractionEvent.editReply();
         edit = toPostMessageable(edit);
 
@@ -59,8 +57,13 @@ public abstract class PostMessage {
     InteractionReplyEditMono toPostMessageable(InteractionReplyEditMono edit) {
         PostMessageable postMessageable = toPostMessageable();
 
+        List<EmbedCreateSpec> embedCreateSpecs = new ArrayList<>();
+        if (postMessageable.getEmbed() != null) {
+            embedCreateSpecs.add(postMessageable.getEmbed());
+        }
+
         return edit.withContentOrNull(postMessageable.getContent())
-                .withEmbeds(postMessageable.getEmbed())
+                .withEmbedsOrNull(embedCreateSpecs)
                 .withComponents(getButtons().toArray(LayoutComponent[]::new));
     }
 
@@ -129,9 +132,14 @@ public abstract class PostMessage {
 
     public void initReply() {
         PostMessageable postMessageable = toPostMessageable();
+        List<EmbedCreateSpec> embedCreateSpecs = new ArrayList<>();
+
+        if (postMessageable.getEmbed() != null) {
+            embedCreateSpecs.add(postMessageable.getEmbed());
+        }
 
         event.reply(postMessageable.getContent() != null ? postMessageable.getContent() : "")
-                .withEmbeds(postMessageable.getEmbed())
+                .withEmbeds(embedCreateSpecs)
                 .withComponents(getButtons())
                 .block();
     }

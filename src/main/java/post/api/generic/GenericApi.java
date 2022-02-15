@@ -40,6 +40,11 @@ public abstract class GenericApi implements PostApi {
     }
 
     @Override
+    public Optional<Integer> getMaxTags() {
+        return Optional.empty();
+    }
+
+    @Override
     public int fetchCount(String tags) throws PostFetchException {
         String encodedTags = PostApiUtil.encodeSpaces(tags);
         String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=0&tags=" + encodedTags;

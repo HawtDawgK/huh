@@ -12,6 +12,7 @@ import post.api.PostFetchException;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -50,6 +51,8 @@ public class PostsCommand implements Command {
                 .orElse("");
 
         PostSite postSite = PostSite.findByName(siteName);
+        CommandUtil.checkMaxTags(postSite.getPostApi(), tags);
+
         return PostMessageFactory.createPost(event, tags, postSite);
     }
 

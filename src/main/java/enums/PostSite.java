@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import post.api.PostApi;
 import post.api.danbooru.DanbooruApi;
 import post.api.gelbooru.GelbooruApi;
+import post.api.hypnohub.HypnohubApi;
 import post.api.rule34.Rule34Api;
 import post.api.tbib.TbibApi;
 import post.api.xbooru.XbooruApi;
@@ -19,7 +20,8 @@ public enum PostSite {
     DANBOORU("Danbooru", new DanbooruApi()),
     GELBOORU("Gelbooru", new GelbooruApi()),
     XBOORU("Xbooru", new XbooruApi()),
-    TBIB("The Big Imageboard", new TbibApi());
+    TBIB("The Big Imageboard", new TbibApi()),
+    HYPNOHUB("Hypnohub", new HypnohubApi());
 
     private final String name;
     private final PostApi postApi;

@@ -23,6 +23,8 @@ public interface PostApi {
 
     Optional<Integer> getMaxCount();
 
+    Optional<Integer> getMaxTags();
+
     int fetchCount(String tags) throws PostFetchException;
 
     Optional<Post> fetchById(long id) throws PostFetchException;

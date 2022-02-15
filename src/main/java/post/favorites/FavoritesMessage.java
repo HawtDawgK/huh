@@ -4,13 +4,14 @@ import db.PostRepository;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.component.LayoutComponent;
+import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import discord4j.core.spec.MessageEditSpec;
 import embed.ErrorEmbed;
-import post.Post;
-import post.PostListMessage;
-import post.PostMessageButtons;
-import post.PostResolvableEntry;
+import post.*;
 import post.api.PostFetchException;
+import post.event.FavoriteEvent;
+import post.event.FavoriteEventType;
 import post.history.PostHistory;
 import reactor.core.publisher.Mono;
 
@@ -47,6 +48,20 @@ public class FavoritesMessage extends PostListMessage {
         }
 
         return super.handleInteraction(buttonInteractionEvent);
+    }
+
+    public void onFavoriteEvent(FavoriteEvent favoriteEvent) {
+        if (!favoriteEvent.getUser().equals(user)) {
+            return;
+        }
+
+        if (favoriteEvent.getEventType() == FavoriteEventType.ADDED) {
+            getPostList().add(favoriteEvent.getAddedPost());
+        } else {
+            getPostList().remove(favoriteEvent.getAddedPost());
+
+
+        }
     }
 
     private Mono<Void> removeFavorite(ButtonInteractionEvent buttonInteractionEvent) {

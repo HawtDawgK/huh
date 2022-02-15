@@ -54,6 +54,11 @@ public class DanbooruApi extends GenericApi {
     }
 
     @Override
+    public Optional<Integer> getMaxTags() {
+        return Optional.of(2);
+    }
+
+    @Override
     public List<ApplicationCommandOptionChoiceData> autocomplete(String input) throws AutocompleteException {
         String lastInput = PostApiUtil.getLastAutocompleteString(input);
         String urlString = getAutocompleteUrl(lastInput);
@@ -107,7 +112,7 @@ public class DanbooruApi extends GenericApi {
     @Override
     public Optional<Post> fetchByTagsAndPage(String tags, int page) throws PostFetchException {
         String encodedTags = PostApiUtil.encodeSpaces(tags);
-        String urlString = BASE_URL + "posts.json/" + "?tags=" + encodedTags + "&page=" + page + "&limit=1";
+        String urlString = BASE_URL + "posts.json?tags=" + encodedTags + "&page=" + page + "&limit=1";
 
         try {
             HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(urlString)).GET().build();
@@ -132,12 +137,6 @@ public class DanbooruApi extends GenericApi {
 
     @Override
     public int fetchCount(String tags) throws PostFetchException {
-        String[] tagParts = tags.split(" ");
-
-        if (tagParts.length > 2) {
-            throw new PostFetchException("Can search for max 2 tags via Danbooru");
-        }
-
         try {
             String encodedTags = PostApiUtil.encodeSpaces(tags);
             String urlString = BASE_URL + "counts/posts.json?tags=" + encodedTags;

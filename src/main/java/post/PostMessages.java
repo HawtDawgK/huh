@@ -5,6 +5,8 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.object.entity.Message;
 import lombok.extern.slf4j.Slf4j;
+import post.event.FavoriteEvent;
+import post.favorites.FavoritesMessage;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -52,5 +54,12 @@ public class PostMessages {
 
         PostMessage postMessage = postMessageMap.get(message.getId());
         return postMessage.handleInteraction(buttonInteractionEvent);
+    }
+
+    public static void onFavoriteEvent(FavoriteEvent favoriteEvent) {
+        postMessageMap.values().stream()
+                .filter(FavoritesMessage.class::isInstance)
+                .map(FavoritesMessage.class::cast)
+                .forEach(p -> p.onFavoriteEvent(favoriteEvent));
     }
 }
