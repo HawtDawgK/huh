@@ -5,18 +5,20 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.object.entity.Message;
 import lombok.extern.slf4j.Slf4j;
-import post.event.FavoriteEvent;
+import post.favorites.FavoriteEvent;
 import post.favorites.FavoritesMessage;
+import post.history.HistoryEvent;
+import post.history.HistoryMessage;
 import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class PostMessages {
 
-    private static final Map<Snowflake, PostMessage> postMessageMap = new HashMap<>();
+    private static final Map<Snowflake, PostMessage> postMessageMap = new ConcurrentHashMap<>();
 
     public static void addPost(PostMessage postMessage) {
         Message message = postMessage.getEvent().getReply().block();
@@ -61,5 +63,12 @@ public class PostMessages {
                 .filter(FavoritesMessage.class::isInstance)
                 .map(FavoritesMessage.class::cast)
                 .forEach(p -> p.onFavoriteEvent(favoriteEvent));
+    }
+
+    public static synchronized void onHistoryEvent(HistoryEvent historyEvent) {
+        postMessageMap.values().stream()
+                .filter(HistoryMessage.class::isInstance)
+                .map(HistoryMessage.class::cast)
+                .forEach(p -> p.onHistoryEvent(historyEvent));
     }
 }

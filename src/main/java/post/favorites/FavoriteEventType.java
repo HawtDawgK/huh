@@ -1,4 +1,4 @@
-package post.event;
+package post.favorites;
 
 public enum FavoriteEventType {
     ADDED,

@@ -12,9 +12,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import post.api.PostFetchException;
+import post.favorites.FavoriteEvent;
+import post.favorites.FavoriteEventType;
 import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.*;
 
 @Slf4j
@@ -83,6 +86,10 @@ public abstract class PostMessage {
             }
 
             PostRepository.addFavorite(user, currentResolvable);
+
+            PostResolvableEntry newEntry = new PostResolvableEntry(currentResolvable.getPostId(),
+                    currentResolvable.getPostSite(), Instant.now());
+            PostMessages.onFavoriteEvent(new FavoriteEvent(user, newEntry, FavoriteEventType.ADDED));
             return event.reply("Successfully stored favorite.").withEphemeral(true);
         } catch (SQLException | PostFetchException e) {
             log.error(e.getMessage(), e);

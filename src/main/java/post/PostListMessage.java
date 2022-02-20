@@ -50,17 +50,17 @@ public class PostListMessage extends PostMessage {
 
     public void editMessage() {
         try {
-            Optional<Message> optionalMessage = getEvent().getInteraction().getMessage();
+            Message message = getEvent().getReply().block();
 
-            if (optionalMessage.isEmpty()) {
+            if (message == null) {
+                log.info("");
                 return;
             }
-
-            Message message = optionalMessage.get();
 
             Optional<Post> optionalPost = getCurrentPost();
 
             if (optionalPost.isEmpty()) {
+                log.info("Post is empty");
                 return;
             }
 
@@ -76,7 +76,7 @@ public class PostListMessage extends PostMessage {
                 builder.embeds(Collections.singletonList(postMessageable.getEmbed()));
             }
 
-            message.edit(builder.build());
+            message.edit(builder.build()).block();
         } catch (PostFetchException e) {
             log.error("Error fetching post while editing message", e);
         }
@@ -97,4 +97,5 @@ public class PostListMessage extends PostMessage {
     public int getCount() {
         return postList.size();
     }
+
 }

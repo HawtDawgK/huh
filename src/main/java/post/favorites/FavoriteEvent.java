@@ -1,4 +1,4 @@
-package post.event;
+package post.favorites;
 
 import discord4j.core.object.entity.User;
 import lombok.Getter;

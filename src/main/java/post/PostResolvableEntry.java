@@ -14,4 +14,14 @@ public class PostResolvableEntry extends PostResolvable {
         super(postId, postSite);
         this.storedAt = storedAt;
     }
+
+    @Override
+    public boolean equals(Object object) {
+        return super.equals(object);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

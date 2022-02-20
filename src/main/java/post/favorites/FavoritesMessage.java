@@ -4,14 +4,10 @@ import db.PostRepository;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.component.LayoutComponent;
-import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.spec.MessageEditSpec;
 import embed.ErrorEmbed;
 import post.*;
 import post.api.PostFetchException;
-import post.event.FavoriteEvent;
-import post.event.FavoriteEventType;
 import post.history.PostHistory;
 import reactor.core.publisher.Mono;
 
@@ -58,10 +54,14 @@ public class FavoritesMessage extends PostListMessage {
         if (favoriteEvent.getEventType() == FavoriteEventType.ADDED) {
             getPostList().add(favoriteEvent.getAddedPost());
         } else {
+            int oldSize = getPostList().size();
             getPostList().remove(favoriteEvent.getAddedPost());
-
-
+            if (oldSize - 1 == getPage()) {
+                setPage(getPage() - 1);
+            }
         }
+
+        editMessage();
     }
 
     private Mono<Void> removeFavorite(ButtonInteractionEvent buttonInteractionEvent) {
@@ -76,6 +76,7 @@ public class FavoritesMessage extends PostListMessage {
         try {
             PostResolvableEntry postResolvableEntry = getPostList().get(getPage());
             PostRepository.removeFavorite(reactingUser, postResolvableEntry);
+            PostMessages.onFavoriteEvent(new FavoriteEvent(user, postResolvableEntry, FavoriteEventType.REMOVED));
             return buttonInteractionEvent.reply("Successfully removed favorite.").withEphemeral(true);
         }  catch (SQLException e) {
             return buttonInteractionEvent.reply().withEmbeds(ErrorEmbed.create("Error removing favorite"));
