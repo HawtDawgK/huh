@@ -29,7 +29,7 @@ public class AutocompleteResult {
         String originalInputWithoutLastWord = stringJoiner.toString();
 
         return ApplicationCommandOptionChoiceData.builder()
-                .name(originalInputWithoutLastWord + " " + label)
+                .name(originalInputWithoutLastWord + " " + value)
                 .value(originalInputWithoutLastWord + " " + value)
                 .build();
     }
