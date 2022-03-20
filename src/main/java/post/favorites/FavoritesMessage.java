@@ -25,6 +25,11 @@ public class FavoritesMessage extends PostListMessage {
     }
 
     @Override
+    public String getTitle() {
+        return "Favorites for " + user.getMention();
+    }
+
+    @Override
     public List<LayoutComponent> getButtons() {
         return PostMessageButtons.actionRowFavorites();
     }

@@ -14,15 +14,17 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class PostListMessage extends PostMessage {
+public abstract class PostListMessage extends PostMessage {
 
     @Getter
     private final List<PostResolvableEntry> postList;
 
-    public PostListMessage(List<PostResolvableEntry> postList, ChatInputInteractionEvent event) {
+    protected PostListMessage(List<PostResolvableEntry> postList, ChatInputInteractionEvent event) {
         super(event);
         this.postList = postList;
     }
+
+    public abstract String getTitle();
 
     @Override
     public Optional<Post> getCurrentPost() throws PostFetchException {

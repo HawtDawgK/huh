@@ -1,4 +1,4 @@
-package post;
+package post.api.hypnohub;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -6,20 +6,14 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JacksonXmlRootElement(localName = "posts")
-public class PostQueryResult {
-
-    private int count;
-
-    private long offset;
+@JacksonXmlRootElement(localName = "tags")
+public class HypnohubAutocompleteResponse {
 
     @JacksonXmlElementWrapper(useWrapping = false)
-    @JacksonXmlProperty(localName = "post", isAttribute = true)
-    private final List<Post> posts = new ArrayList<>();
-
+    @JacksonXmlProperty(localName = "tag", isAttribute = true)
+    private List<HypnohubTag> tags;
 }

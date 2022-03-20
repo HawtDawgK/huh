@@ -4,7 +4,6 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import lombok.extern.slf4j.Slf4j;
 import post.Post;
-import post.PostQueryResult;
 import post.api.PostApi;
 import post.api.PostApiUtil;
 import post.api.PostFetchException;
@@ -44,11 +43,19 @@ public abstract class GenericApi implements PostApi {
         return Optional.empty();
     }
 
+    public static HttpClient getHttpClient() {
+        return HTTP_CLIENT;
+    }
+
+    public static XmlMapper getXmlMapper() {
+        return xmlMapper;
+    }
+
     @Override
     public int fetchCount(String tags) throws PostFetchException {
         String encodedTags = PostApiUtil.encodeSpaces(tags);
         String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=0&tags=" + encodedTags;
-        PostQueryResult postQueryResult = getPosts(urlString);
+        GenericPostQueryResult postQueryResult = getPosts(urlString);
 
         return postQueryResult.getCount();
     }
@@ -56,7 +63,7 @@ public abstract class GenericApi implements PostApi {
     @Override
     public Optional<Post> fetchById(long id) throws PostFetchException {
         String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=1&id=" + id;
-        PostQueryResult queryResult = getPosts(urlString);
+        GenericPostQueryResult queryResult = getPosts(urlString);
         return getFirstPost(queryResult);
     }
 
@@ -66,7 +73,7 @@ public abstract class GenericApi implements PostApi {
 
         String urlString = getBaseUrl() + "index.php?page=dapi&s=post&q=index&limit=1&tags="
                 + encodedTags + "&pid=" + page;
-        PostQueryResult queryResult = getPosts(urlString);
+        GenericPostQueryResult queryResult = getPosts(urlString);
 
         return getFirstPost(queryResult);
     }
@@ -78,7 +85,7 @@ public abstract class GenericApi implements PostApi {
         return PostApiUtil.autocomplete(urlString, input);
     }
 
-    private Optional<Post> getFirstPost(PostQueryResult queryResult) {
+    private Optional<Post> getFirstPost(GenericPostQueryResult queryResult) {
         Optional<GenericPost> optionalPost = queryResult.getPosts().stream().findFirst();
 
         return optionalPost.map(x -> {
@@ -87,7 +94,7 @@ public abstract class GenericApi implements PostApi {
         });
     }
 
-    private PostQueryResult getPosts(String urlString) throws PostFetchException {
+    private GenericPostQueryResult getPosts(String urlString) throws PostFetchException {
         try {
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlString)).GET().build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
@@ -96,7 +103,7 @@ public abstract class GenericApi implements PostApi {
                 throw new PostFetchException("Error occurred fetching post");
             }
 
-            return xmlMapper.readValue(response.body(), PostQueryResult.class);
+            return xmlMapper.readValue(response.body(), GenericPostQueryResult.class);
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new PostFetchException(e.getMessage(), e);

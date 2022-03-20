@@ -15,6 +15,11 @@ public class HistoryMessage extends PostListMessage {
         super(postList, event);
     }
 
+    @Override
+    public String getTitle() {
+        return "Post history";
+    }
+
     public synchronized void onHistoryEvent(HistoryEvent event) {
         MessageChannel messageChannel = getEvent().getInteraction().getChannel().block();
 

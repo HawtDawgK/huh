@@ -1,4 +1,4 @@
-package post;
+package post.api.hypnohub;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "posts")
-public class PostQueryResult {
+public class HypnoHubQueryResult {
 
     private int count;
 
@@ -20,6 +20,6 @@ public class PostQueryResult {
 
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "post", isAttribute = true)
-    private final List<Post> posts = new ArrayList<>();
+    private final List<HypnohubPost> posts = new ArrayList<>();
 
 }
