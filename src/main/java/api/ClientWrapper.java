@@ -1,8 +1,8 @@
 package api;
 
-import discord4j.core.DiscordClient;
-import discord4j.core.GatewayDiscordClient;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.DiscordApi;
+import org.javacord.api.DiscordApiBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,10 +11,12 @@ import java.util.Properties;
 @Slf4j
 public class ClientWrapper {
 
-    private static final GatewayDiscordClient client = DiscordClient.create(getToken()).gateway().login().block();
+    private static final DiscordApi api = new DiscordApiBuilder()
+            .setToken(getToken())
+            .login().join();
 
-    public static GatewayDiscordClient getClient() {
-        return client;
+    public static DiscordApi getApi() {
+        return api;
     }
 
     private static String getToken() {

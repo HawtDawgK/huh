@@ -1,18 +1,18 @@
 package post;
 
 import db.PostRepository;
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.entity.User;
 import embed.ErrorEmbed;
 import embed.PostNotFoundEmbed;
 import enums.PostSite;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.user.User;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import post.api.PostApi;
 import post.api.PostFetchException;
 import post.favorites.FavoritesMessage;
-import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -21,12 +21,15 @@ import java.util.List;
 @UtilityClass
 public class PostMessageFactory {
 
-    public static Mono<Void> createPost(ChatInputInteractionEvent event, String tags, PostSite postSite) throws PostFetchException {
+    public static void createPost(SlashCommandCreateEvent event, String tags, PostSite postSite) throws PostFetchException {
         PostApi postApi = postSite.getPostApi();
         int count = postApi.fetchCount(tags);
 
         if (count == 0) {
-            return event.reply().withEmbeds(PostNotFoundEmbed.create(tags));
+            event.getSlashCommandInteraction().createImmediateResponder()
+                    .addEmbed(PostNotFoundEmbed.create(tags))
+                    .respond();
+            return;
         }
 
         int maxCount = postApi.getMaxCount().map(c -> Math.min(c, count)).orElse(count);
@@ -35,27 +38,28 @@ public class PostMessageFactory {
         postMessage.initReply();
 
         PostMessages.addPost(postMessage);
-
-        return Mono.empty();
     }
 
-    public static Mono<Void> createListPostFromFavorites(ChatInputInteractionEvent event, User user) {
+    public static void createListPostFromFavorites(SlashCommandCreateEvent event, User user) {
         try {
-            List<PostResolvableEntry> favorites = PostRepository.getFavorites(user.getId().asLong());
+            List<PostResolvableEntry> favorites = PostRepository.getFavorites(user.getId());
 
             if (favorites.isEmpty()) {
-                return event.reply().withEmbeds(ErrorEmbed.create("No favorites found."));
+                event.getSlashCommandInteraction().createImmediateResponder()
+                        .addEmbeds(ErrorEmbed.create("No favorites found."))
+                        .respond();
+                return;
             }
 
             PostMessage postMessage = new FavoritesMessage(favorites, user, event);
             postMessage.initReply();
 
             PostMessages.addPost(postMessage);
-
-            return Mono.empty();
         } catch (SQLException e) {
             log.error("Error occurred fetching favorites", e);
-            return event.reply().withEmbeds(ErrorEmbed.create("Error fetching favorites"));
+            event.getSlashCommandInteraction().createImmediateResponder()
+                    .addEmbed(ErrorEmbed.create("Error fetching favorites"))
+                    .respond();
         }
     }
 

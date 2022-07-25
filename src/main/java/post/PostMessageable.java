@@ -1,10 +1,10 @@
 package post;
 
-import discord4j.core.spec.EmbedCreateSpec;
 import embed.PostEmbedOptions;
 import embed.PostMessageEmbed;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class PostMessageable {
 
     private final @Nullable String content;
-    private final @Nullable EmbedCreateSpec embed;
+    private final @Nullable EmbedBuilder embed;
 
     public static PostMessageable fromPost(PostEmbedOptions options) {
         if (options.getPost().isAnimated()) {
@@ -22,7 +22,7 @@ public class PostMessageable {
         return new PostMessageable(null, PostMessageEmbed.fromPost(options));
     }
 
-    public static PostMessageable fromEmbed(EmbedCreateSpec embed) {
+    public static PostMessageable fromEmbed(EmbedBuilder embed) {
         return new PostMessageable(null, embed);
     }
 }

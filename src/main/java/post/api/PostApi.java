@@ -1,7 +1,7 @@
 package post.api;
 
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import enums.PostSite;
+import org.javacord.api.interaction.SlashCommandOptionChoice;
 import post.Post;
 import post.autocomplete.AutocompleteException;
 
@@ -31,5 +31,6 @@ public interface PostApi {
 
     Optional<Post> fetchByTagsAndPage(String tags, int page) throws PostFetchException;
 
-    List<ApplicationCommandOptionChoiceData> autocomplete(String input) throws AutocompleteException;
+    List<SlashCommandOptionChoice> autocomplete(String input) throws AutocompleteException;
+
 }

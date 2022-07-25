@@ -1,36 +1,35 @@
 package embed;
 
-import discord4j.core.spec.EmbedCreateFields.Footer;
-import discord4j.core.spec.EmbedCreateSpec;
 import lombok.experimental.UtilityClass;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 
 @UtilityClass
 public class PostMessageEmbed {
 
-    public static EmbedCreateSpec fromPost(PostEmbedOptions options) {
-        EmbedCreateSpec.Builder embedBuilder = EmbedCreateSpec.builder();
+    public static EmbedBuilder fromPost(PostEmbedOptions options) {
+        EmbedBuilder embedBuilder = new EmbedBuilder();
 
         if (options.getTitle() != null) {
-            embedBuilder.title(options.getTitle());
+            embedBuilder.setTitle(options.getTitle());
         }
         if (options.getDescription() != null) {
-            embedBuilder.description(options.getDescription());
+            embedBuilder.setDescription(options.getDescription());
         }
 
         if (options.getEntry() != null) {
-            embedBuilder.timestamp(options.getEntry().getStoredAt());
+            embedBuilder.setTimestamp(options.getEntry().getStoredAt());
         } else {
-            embedBuilder.timestamp(options.getPost().getCreatedAt().toInstant());
+            embedBuilder.setTimestamp(options.getPost().getCreatedAt().toInstant());
         }
 
-        embedBuilder.image(options.getPost().getFileUrl());
-        embedBuilder.footer(toFooter(options.getPage(), options.getCount(), options.getPost().getScore()));
+        embedBuilder.setImage(options.getPost().getFileUrl());
+        embedBuilder.setFooter(toFooter(options.getPage(), options.getCount(), options.getPost().getScore()));
 
-        return embedBuilder.build();
+        return embedBuilder;
     }
 
-    private static Footer toFooter(int page, int count, long score) {
-        return Footer.of(String.format("Page %d of %d \u2022 Score: %d", page + 1, count, score), null);
+    private static String toFooter(int page, int count, long score) {
+        return String.format("Page %d of %d \u2022 Score: %d", page + 1, count, score);
     }
 
 }

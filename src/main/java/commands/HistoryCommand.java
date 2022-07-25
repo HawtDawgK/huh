@@ -1,45 +1,44 @@
 package commands;
 
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.entity.channel.MessageChannel;
-import discord4j.discordjson.json.ApplicationCommandRequest;
 import embed.ErrorEmbed;
+import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.entity.message.Message;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.SlashCommandBuilder;
 import post.PostMessage;
 import post.PostMessages;
 import post.PostResolvableEntry;
 import post.history.HistoryMessage;
 import post.history.PostHistory;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 public class HistoryCommand implements Command {
 
     @Override
-    public ApplicationCommandRequest toApplicationCommandRequest() {
-        return ApplicationCommandRequest.builder()
-                .name("history")
-                .description("Shows post history")
-                .build();
+    public SlashCommandBuilder toSlashCommandBuilder() {
+        return new SlashCommandBuilder()
+                .setName("history")
+                .setDescription("Shows post history");
     }
 
     @Override
-    public Mono<Void> apply(ChatInputInteractionEvent event) throws CommandException {
-        CommandUtil.checkNsfwChannel(event);
+    public void apply(SlashCommandCreateEvent event) throws CommandException {
+        CommandUtil.checkNsfwChannel(event.getInteraction());
 
-        MessageChannel messageChannel = event.getInteraction().getChannel().block();
+        TextChannel messageChannel = event.getInteraction().getChannel().orElseThrow(() -> new IllegalArgumentException(""));
         List<PostResolvableEntry> postHistoryFromChannel = PostHistory.getHistory(messageChannel);
 
         if (postHistoryFromChannel.isEmpty()) {
-            return event.reply().withEmbeds(ErrorEmbed.create("No posts in history."));
+            event.getSlashCommandInteraction().createImmediateResponder()
+                    .addEmbed(ErrorEmbed.create("No posts in history."))
+                    .respond();
         }
 
         PostMessage postMessage = new HistoryMessage(postHistoryFromChannel, event);
         postMessage.initReply();
 
         PostMessages.addPost(postMessage);
-
-        return Mono.empty();
     }
 
 }

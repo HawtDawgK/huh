@@ -1,39 +1,29 @@
 package commands;
 
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
-import discord4j.core.object.command.ApplicationCommandOption;
-import discord4j.core.object.entity.User;
-import discord4j.discordjson.json.ApplicationCommandOptionData;
-import discord4j.discordjson.json.ApplicationCommandRequest;
+import org.javacord.api.entity.user.User;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.*;
 import post.PostMessageFactory;
-import reactor.core.publisher.Mono;
 
 public class FavoritesCommand implements Command {
 
     @Override
-    public ApplicationCommandRequest toApplicationCommandRequest() {
-        return ApplicationCommandRequest.builder()
-                .name("favorites")
-                .description("Show a user's favorites")
-                .addOption(ApplicationCommandOptionData.builder()
-                        .name("user")
-                        .description("User to search favorites you, will be you if unfilled")
-                        .type(ApplicationCommandOption.Type.USER.getValue())
-                        .build())
-                .build();
+    public SlashCommandBuilder toSlashCommandBuilder() {
+        return SlashCommand.with("favorites", "Show a user's favorites")
+                .addOption(new SlashCommandOptionBuilder()
+                        .setName("user")
+                        .setDescription("User to search favorites you, will be you if unfilled")
+                        .setType(SlashCommandOptionType.USER)
+                        .build());
     }
 
     @Override
-    public Mono<Void> apply(ChatInputInteractionEvent event) throws CommandException {
-        CommandUtil.checkNsfwChannel(event);
+    public void apply(SlashCommandCreateEvent event) throws CommandException {
+        CommandUtil.checkNsfwChannel(event.getInteraction());
 
-        User user = event.getOption("user")
-                .flatMap(o -> o.getValue()
-                        .map(ApplicationCommandInteractionOptionValue::asUser)
-                        .map(Mono::block))
+        User user = event.getSlashCommandInteraction().getOptionUserValueByName("user")
                 .orElse(event.getInteraction().getUser());
 
-        return PostMessageFactory.createListPostFromFavorites(event, user);
+        PostMessageFactory.createListPostFromFavorites(event, user);
     }
 }

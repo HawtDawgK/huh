@@ -1,8 +1,8 @@
 package enums;
 
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.javacord.api.interaction.SlashCommandOptionChoice;
 import post.api.PostApi;
 import post.api.danbooru.DanbooruApi;
 import post.api.gelbooru.GelbooruApi;
@@ -26,11 +26,8 @@ public enum PostSite {
     private final String name;
     private final PostApi postApi;
 
-    public ApplicationCommandOptionChoiceData toApplicationCommand() {
-        return ApplicationCommandOptionChoiceData.builder()
-                .name(name)
-                .value(name)
-                .build();
+    public SlashCommandOptionChoice toApplicationCommand() {
+        return SlashCommandOptionChoice.create(name, name);
     }
 
     public static PostSite findByName(String name) {

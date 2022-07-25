@@ -1,9 +1,9 @@
 package post.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.interaction.SlashCommandOptionChoice;
 import post.autocomplete.AutocompleteException;
 import post.autocomplete.AutocompleteResult;
 
@@ -38,7 +38,7 @@ public class PostApiUtil {
         return parts[parts.length - 1];
     }
 
-    public static List<ApplicationCommandOptionChoiceData> autocomplete(String urlString, String oldInput) throws AutocompleteException {
+    public static List<SlashCommandOptionChoice> autocomplete(String urlString, String oldInput) throws AutocompleteException {
         try {
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlString)).GET().build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());

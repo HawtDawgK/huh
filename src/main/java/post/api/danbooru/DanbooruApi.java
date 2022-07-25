@@ -1,9 +1,10 @@
 package post.api.danbooru;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.interaction.SlashCommandOptionChoice;
+import org.javacord.api.interaction.SlashCommandOptionChoiceBuilder;
 import post.Post;
 import post.api.PostApiUtil;
 import post.api.PostFetchException;
@@ -59,7 +60,7 @@ public class DanbooruApi extends GenericApi {
     }
 
     @Override
-    public List<ApplicationCommandOptionChoiceData> autocomplete(String input) throws AutocompleteException {
+    public List<SlashCommandOptionChoice> autocomplete(String input) throws AutocompleteException {
         String lastInput = PostApiUtil.getLastAutocompleteString(input);
         String urlString = getAutocompleteUrl(lastInput);
 
@@ -72,9 +73,9 @@ public class DanbooruApi extends GenericApi {
             DanbooruAutocompleteResponse[] responses = objectMapper.readValue(response.body(),
                     DanbooruAutocompleteResponse[].class);
 
-            return Arrays.stream(responses).map(resp -> ApplicationCommandOptionChoiceData.builder()
-                    .name(resp.getName() + " (" + resp.getPostCount() + ")")
-                    .value(resp.getName())
+            return Arrays.stream(responses).map(resp -> new SlashCommandOptionChoiceBuilder()
+                    .setName(resp.getName() + " (" + resp.getPostCount() + ")")
+                    .setValue(resp.getName())
                     .build()).collect(Collectors.toList());
         } catch (IOException e) {
             log.error(e.getMessage(), e);

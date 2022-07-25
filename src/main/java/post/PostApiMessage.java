@@ -1,9 +1,9 @@
 package post;
 
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import embed.ErrorEmbed;
 import embed.PostEmbedOptions;
 import embed.PostNotFoundEmbed;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import post.api.PostApi;
 import post.api.PostFetchException;
 import post.cache.PostCache;
@@ -17,7 +17,7 @@ public class PostApiMessage extends PostMessage {
     private final String tags;
     private final PostApi postApi;
 
-    public PostApiMessage(ChatInputInteractionEvent event, PostApi postApi, String tags, int count) {
+    public PostApiMessage(SlashCommandCreateEvent event, PostApi postApi, String tags, int count) {
         super(event);
         this.postApi = postApi;
         this.tags = tags;
@@ -52,7 +52,7 @@ public class PostApiMessage extends PostMessage {
 
         optionalPost.ifPresent(post -> {
             PostCache.put(post);
-            PostHistory.addPost(getEvent().getInteraction().getChannel().block(), post);
+            PostHistory.addPost(getEvent().getInteraction().getChannel().get(), post);
         });
 
         return optionalPost;

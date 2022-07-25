@@ -1,6 +1,5 @@
 package post.api.hypnohub;
 
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import enums.PostSite;
 
 import java.io.IOException;
@@ -9,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import org.javacord.api.interaction.SlashCommandOptionChoice;
 import post.Post;
 import post.api.PostApiUtil;
 import post.api.PostFetchException;
@@ -95,7 +95,7 @@ public class HypnohubApi extends GenericApi {
     }
 
     @Override
-    public List<ApplicationCommandOptionChoiceData> autocomplete(String input) throws AutocompleteException {
+    public List<SlashCommandOptionChoice> autocomplete(String input) throws AutocompleteException {
         String urlString = getBaseUrl() + "tag/index.xml?order=count&limit=25&name=" + input;
 
         try {
@@ -134,13 +134,9 @@ public class HypnohubApi extends GenericApi {
 
         HypnoHubQueryResult hypnoHubQueryResult = getXmlMapper().readValue(response.body(), HypnoHubQueryResult.class);
 
-        List<HypnohubPost> posts = hypnoHubQueryResult.getPosts();
-
-        if (posts.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.of(posts.get(0));
+        List<HypnohubPost> posts = hypnoHubQueryResult.getPosts().stream()
+                .map(x -> (HypnohubPost) x).collect(Collectors.toList());
+        return posts.stream().findFirst();
     }
 
     private int getCount(String urlString) throws IOException, InterruptedException {

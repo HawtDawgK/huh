@@ -1,9 +1,10 @@
 package post;
 
-import discord4j.core.object.component.ActionRow;
-import discord4j.core.object.component.Button;
-import discord4j.core.object.component.LayoutComponent;
 import lombok.experimental.UtilityClass;
+import org.javacord.api.entity.message.component.ActionRow;
+import org.javacord.api.entity.message.component.Button;
+import org.javacord.api.entity.message.component.HighLevelComponent;
+import org.javacord.api.entity.message.component.SelectMenuOption;
 
 import java.util.List;
 
@@ -14,14 +15,14 @@ public class PostMessageButtons {
             Button.primary("random-page", "Random page"),
             Button.primary("previous-page", "Previous page"));
 
-    public static List<LayoutComponent> actionRow() {
+    public static List<HighLevelComponent> actionRow() {
         ActionRow row2 = ActionRow.of(Button.success("add-favorite", "Add favorite"),
                         Button.danger("delete-message", "Delete message"));
 
         return List.of(PAGE_ROW, row2);
     }
 
-    public static List<LayoutComponent> actionRowFavorites() {
+    public static List<HighLevelComponent> actionRowFavorites() {
         ActionRow row2 = ActionRow.of(Button.success("add-favorite", "Favorite"),
                 Button.danger("delete-message", "Delete message"),
                 Button.danger("delete-favorite", "Remove favorite"));

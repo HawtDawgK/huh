@@ -1,15 +1,16 @@
 package post.favorites;
 
 import db.PostRepository;
-import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.component.LayoutComponent;
-import discord4j.core.object.entity.User;
 import embed.ErrorEmbed;
+import org.javacord.api.entity.message.MessageFlag;
+import org.javacord.api.entity.message.component.HighLevelComponent;
+import org.javacord.api.entity.user.User;
+import org.javacord.api.event.interaction.MessageComponentCreateEvent;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.MessageComponentInteraction;
 import post.*;
 import post.api.PostFetchException;
 import post.history.PostHistory;
-import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -19,18 +20,18 @@ public class FavoritesMessage extends PostListMessage {
 
     private final User user;
 
-    public FavoritesMessage(List<PostResolvableEntry> postList, User user, ChatInputInteractionEvent event) {
+    public FavoritesMessage(List<PostResolvableEntry> postList, User user, SlashCommandCreateEvent event) {
         super(postList, event);
         this.user = user;
     }
 
     @Override
     public String getTitle() {
-        return "Favorites for " + user.getMention();
+        return "Favorites for " + user.getMentionTag();
     }
 
     @Override
-    public List<LayoutComponent> getButtons() {
+    public List<HighLevelComponent> getButtons() {
         return PostMessageButtons.actionRowFavorites();
     }
 
@@ -38,17 +39,19 @@ public class FavoritesMessage extends PostListMessage {
     public Optional<Post> getCurrentPost() throws PostFetchException {
         Optional<Post> optionalPost = super.getCurrentPost();
 
-        optionalPost.ifPresent(post -> PostHistory.addPost(getEvent().getInteraction().getChannel().block(), post));
+        optionalPost.ifPresent(post -> PostHistory.addPost(getEvent().getInteraction().getChannel().orElseThrow(), post));
         return optionalPost;
     }
 
     @Override
-    public Mono<Void> handleInteraction(ButtonInteractionEvent buttonInteractionEvent) {
-        if (buttonInteractionEvent.getCustomId().equals("delete-favorite")) {
-            return removeFavorite(buttonInteractionEvent);
-        }
+    public void handleInteraction(MessageComponentCreateEvent event) {
+        MessageComponentInteraction interaction = event.getMessageComponentInteraction();
 
-        return super.handleInteraction(buttonInteractionEvent);
+        if (interaction.getCustomId().equals("delete-favorite")) {
+            removeFavorite(event);
+        } else {
+            super.handleInteraction(event);
+        }
     }
 
     public void onFavoriteEvent(FavoriteEvent favoriteEvent) {
@@ -69,22 +72,29 @@ public class FavoritesMessage extends PostListMessage {
         editMessage();
     }
 
-    private Mono<Void> removeFavorite(ButtonInteractionEvent buttonInteractionEvent) {
-        User reactingUser = buttonInteractionEvent.getInteraction().getUser();
+    private void removeFavorite(MessageComponentCreateEvent event) {
+        User reactingUser = event.getInteraction().getUser();
 
         if (!reactingUser.equals(user)) {
-            return buttonInteractionEvent
-                    .reply("Only the author can delete a favorite.")
-                    .withEphemeral(true);
+            event.getMessageComponentInteraction().createImmediateResponder()
+                    .setContent("Only the author can delete a favorite.")
+                    .setFlags(MessageFlag.EPHEMERAL)
+                    .respond();
+            return;
         }
 
         try {
             PostResolvableEntry postResolvableEntry = getPostList().get(getPage());
             PostRepository.removeFavorite(reactingUser, postResolvableEntry);
             PostMessages.onFavoriteEvent(new FavoriteEvent(user, postResolvableEntry, FavoriteEventType.REMOVED));
-            return buttonInteractionEvent.reply("Successfully removed favorite.").withEphemeral(true);
+            event.getMessageComponentInteraction().createImmediateResponder()
+                    .setContent("Successfully removed favorite.")
+                    .setFlags(MessageFlag.EPHEMERAL)
+                    .respond();
         }  catch (SQLException e) {
-            return buttonInteractionEvent.reply().withEmbeds(ErrorEmbed.create("Error removing favorite"));
+            event.getMessageComponentInteraction().createImmediateResponder()
+                    .addEmbed(ErrorEmbed.create("Error removing favorite"))
+                    .respond();
         }
     }
 

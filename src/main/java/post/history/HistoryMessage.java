@@ -1,8 +1,8 @@
 package post.history;
 
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.entity.channel.MessageChannel;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import post.PostListMessage;
 import post.PostResolvableEntry;
 
@@ -11,7 +11,7 @@ import java.util.List;
 @Slf4j
 public class HistoryMessage extends PostListMessage {
 
-    public HistoryMessage(List<PostResolvableEntry> postList, ChatInputInteractionEvent event) {
+    public HistoryMessage(List<PostResolvableEntry> postList, SlashCommandCreateEvent event) {
         super(postList, event);
     }
 
@@ -21,15 +21,14 @@ public class HistoryMessage extends PostListMessage {
     }
 
     public synchronized void onHistoryEvent(HistoryEvent event) {
-        MessageChannel messageChannel = getEvent().getInteraction().getChannel().block();
+        TextChannel messageChannel = getEvent().getInteraction().getChannel().get();
 
-        if (!event.getChannel().equals(messageChannel)) {
-            return;
+        if (event.getChannel().equals(messageChannel)) {
+            log.info("Received history event");
+
+            getPostList().add(event.getNewEntry());
+            editMessage();
         }
-        log.info("Received history event");
-
-        getPostList().add(event.getNewEntry());
-        editMessage();
     }
 
 }

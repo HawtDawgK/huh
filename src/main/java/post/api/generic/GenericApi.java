@@ -1,8 +1,9 @@
 package post.api.generic;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.interaction.SlashCommandOptionChoice;
 import post.Post;
 import post.api.PostApi;
 import post.api.PostApiUtil;
@@ -22,6 +23,10 @@ public abstract class GenericApi implements PostApi {
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final XmlMapper xmlMapper = new XmlMapper();
+
+    static {
+        xmlMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+    }
 
     @Override
     public boolean hasAutocomplete() {
@@ -79,14 +84,14 @@ public abstract class GenericApi implements PostApi {
     }
 
     @Override
-    public List<ApplicationCommandOptionChoiceData> autocomplete(String input) throws AutocompleteException {
+    public List<SlashCommandOptionChoice> autocomplete(String input) throws AutocompleteException {
         String lastInput = PostApiUtil.getLastAutocompleteString(input);
         String urlString = getAutocompleteUrl(lastInput);
         return PostApiUtil.autocomplete(urlString, input);
     }
 
     private Optional<Post> getFirstPost(GenericPostQueryResult queryResult) {
-        Optional<GenericPost> optionalPost = queryResult.getPosts().stream().findFirst();
+        Optional<Post> optionalPost = queryResult.getPosts().stream().findFirst();
 
         return optionalPost.map(x -> {
             x.setSite(getSite());

@@ -1,13 +1,12 @@
 package commands;
 
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.discordjson.json.ApplicationCommandRequest;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.SlashCommandBuilder;
 import post.api.PostFetchException;
-import reactor.core.publisher.Mono;
 
 public interface Command {
 
-    ApplicationCommandRequest toApplicationCommandRequest();
+    SlashCommandBuilder toSlashCommandBuilder();
 
-    Mono<Void> apply(ChatInputInteractionEvent event) throws CommandException, PostFetchException;
+    void apply(SlashCommandCreateEvent event) throws CommandException, PostFetchException;
 }

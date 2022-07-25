@@ -1,20 +1,21 @@
 package post;
 
 import db.PostRepository;
-import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.component.LayoutComponent;
-import discord4j.core.object.entity.User;
-import discord4j.core.spec.*;
 import embed.ErrorEmbed;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageFlag;
+import org.javacord.api.entity.message.component.HighLevelComponent;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.user.User;
+import org.javacord.api.event.interaction.MessageComponentCreateEvent;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import post.api.PostFetchException;
 import post.favorites.FavoriteEvent;
 import post.favorites.FavoriteEventType;
-import reactor.core.publisher.Mono;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -28,9 +29,10 @@ public abstract class PostMessage {
 
     private int page;
 
-    private final ChatInputInteractionEvent event;
+    private final SlashCommandCreateEvent event;
 
     private final Random random = new Random();
+    private Message message;
 
     public abstract Optional<Post> getCurrentPost() throws PostFetchException;
 
@@ -50,39 +52,46 @@ public abstract class PostMessage {
         page = random.nextInt(getCount());
     }
 
-    public void updatePost(ButtonInteractionEvent buttonInteractionEvent) {
-        InteractionReplyEditMono edit = buttonInteractionEvent.editReply();
-        edit = toPostMessageable(edit);
-
-        buttonInteractionEvent.deferEdit().then(edit).block();
-    }
-
-    InteractionReplyEditMono toPostMessageable(InteractionReplyEditMono edit) {
+    public void updatePost(MessageComponentCreateEvent edit) {
         PostMessageable postMessageable = toPostMessageable();
 
-        List<EmbedCreateSpec> embedCreateSpecs = new ArrayList<>();
+        List<EmbedBuilder> embedCreateSpecs = new ArrayList<>();
         if (postMessageable.getEmbed() != null) {
             embedCreateSpecs.add(postMessageable.getEmbed());
         }
 
-        return edit.withContentOrNull(postMessageable.getContent())
-                .withEmbedsOrNull(embedCreateSpecs)
-                .withComponents(getButtons().toArray(LayoutComponent[]::new));
+        edit.getMessageComponentInteraction().createOriginalMessageUpdater()
+                .setContent(postMessageable.getContent() != null ? postMessageable.getContent() : "")
+                .removeAllEmbeds()
+                .addEmbeds(embedCreateSpecs)
+                .addComponents(getButtons().toArray(HighLevelComponent[]::new))
+                .update()
+                .join();
     }
 
-    private Mono<Void> addFavorite(ButtonInteractionEvent event) {
+    private void addFavorite(MessageComponentCreateEvent event) {
         try {
             Optional<Post> optionalPost = getCurrentPost();
 
             if (optionalPost.isEmpty()) {
-                return Mono.empty();
+                event.getMessageComponentInteraction()
+                        .createImmediateResponder()
+                        .setContent("Error fetching favorite")
+                        .setFlags(MessageFlag.EPHEMERAL)
+                        .respond();
+                return;
             }
 
             PostResolvable currentResolvable = optionalPost.get().toPostResolvable();
             User user = event.getInteraction().getUser();
 
             if (PostRepository.hasFavorite(user, currentResolvable)) {
-                return event.reply("Already stored as favorite.").withEphemeral(true);
+                event.getMessageComponentInteraction()
+                        .createImmediateResponder()
+                        .setContent("Already stored as favorite.")
+                        .setFlags(MessageFlag.EPHEMERAL)
+                        .respond();
+                return;
             }
 
             PostRepository.addFavorite(user, currentResolvable);
@@ -90,64 +99,78 @@ public abstract class PostMessage {
             PostResolvableEntry newEntry = new PostResolvableEntry(currentResolvable.getPostId(),
                     currentResolvable.getPostSite(), Instant.now());
             PostMessages.onFavoriteEvent(new FavoriteEvent(user, newEntry, FavoriteEventType.ADDED));
-            return event.reply("Successfully stored favorite.").withEphemeral(true);
+            event.getMessageComponentInteraction()
+                    .createImmediateResponder()
+                    .setContent("Successfully stored favorite.")
+                    .setFlags(MessageFlag.EPHEMERAL)
+                    .respond();
         } catch (SQLException | PostFetchException e) {
             log.error(e.getMessage(), e);
-            return event.reply().withEmbeds(ErrorEmbed.create("Error storing favorite."));
+            event.getMessageComponentInteraction()
+                    .createImmediateResponder()
+                    .addEmbed(ErrorEmbed.create("Error storing favorite."))
+                    .respond();
         }
     }
 
-    public Mono<Void> handleInteraction(ButtonInteractionEvent buttonInteractionEvent) {
-        String customId = buttonInteractionEvent.getCustomId();
+    public void handleInteraction(MessageComponentCreateEvent event) {
+        String customId = event.getMessageComponentInteraction().getCustomId();
 
         if (customId.equals("add-favorite")) {
-            return addFavorite(buttonInteractionEvent);
+            addFavorite(event);
+            return;
         }
         if (customId.equals("delete-message")) {
-            return deleteMessage(buttonInteractionEvent);
+            deleteMessage(event);
+            return;
         }
 
         switch (customId) {
             case "next-page" -> nextPage();
             case "random-page" -> randomPage();
             case "previous-page" -> previousPage();
-            default -> log.warn("Received invalid interaction id " + buttonInteractionEvent.getCustomId());
+            default ->
+                    log.warn("Received invalid interaction id " + event.getMessageComponentInteraction().getCustomId());
         }
 
-        updatePost(buttonInteractionEvent);
-        return Mono.empty();
+        updatePost(event);
     }
 
-    private Mono<Void> deleteMessage(ButtonInteractionEvent buttonInteractionEvent) {
+    private void deleteMessage(MessageComponentCreateEvent buttonInteractionEvent) {
         User reactingUser = buttonInteractionEvent.getInteraction().getUser();
         User author = event.getInteraction().getUser();
 
         // Only author can delete the message
         if (!reactingUser.equals(author)) {
-            return buttonInteractionEvent
-                    .reply("Only the author can delete this message")
-                    .withEphemeral(true);
+            buttonInteractionEvent
+                    .getMessageComponentInteraction()
+                    .createImmediateResponder()
+                    .setContent("Only the author can delete this message")
+                    .respond();
+        } else {
+            PostMessages.removePost(this);
+            buttonInteractionEvent.getMessageComponentInteraction().getMessage().delete().join();
         }
-
-        PostMessages.removePost(this);
-        return event.deleteReply();
     }
 
-    public List<LayoutComponent> getButtons() {
+    public List<HighLevelComponent> getButtons() {
         return PostMessageButtons.actionRow();
     }
 
     public void initReply() {
         PostMessageable postMessageable = toPostMessageable();
-        List<EmbedCreateSpec> embedCreateSpecs = new ArrayList<>();
+        List<EmbedBuilder> embedCreateSpecs = new ArrayList<>();
 
         if (postMessageable.getEmbed() != null) {
             embedCreateSpecs.add(postMessageable.getEmbed());
         }
 
-        event.reply(postMessageable.getContent() != null ? postMessageable.getContent() : "")
-                .withEmbeds(embedCreateSpecs)
-                .withComponents(getButtons())
-                .block();
+        this.message = event.getSlashCommandInteraction().createImmediateResponder()
+                .setContent(postMessageable.getContent() != null ? postMessageable.getContent() : "")
+                .addEmbeds(embedCreateSpecs)
+                .addComponents(getButtons().toArray(new HighLevelComponent[0]))
+                .respond()
+                .join()
+                .update().join();
     }
 }

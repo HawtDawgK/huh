@@ -1,8 +1,8 @@
 package post.favorites;
 
-import discord4j.core.object.entity.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.javacord.api.entity.user.User;
 import post.PostResolvableEntry;
 
 @Getter

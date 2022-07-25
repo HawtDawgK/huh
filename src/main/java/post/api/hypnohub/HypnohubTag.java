@@ -2,9 +2,9 @@ package post.api.hypnohub;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import lombok.Getter;
 import lombok.Setter;
+import org.javacord.api.interaction.SlashCommandOptionChoice;
 
 @Getter
 @Setter
@@ -21,10 +21,7 @@ public class HypnohubTag {
 
     private boolean ambiguous;
 
-    public ApplicationCommandOptionChoiceData toApplicationCommandOptionChoiceData() {
-        return ApplicationCommandOptionChoiceData.builder()
-                .name(name)
-                .value(name)
-                .build();
+    public SlashCommandOptionChoice toApplicationCommandOptionChoiceData() {
+        return SlashCommandOptionChoice.create(name, name);
     }
 }

@@ -2,24 +2,19 @@ package launcher;
 
 import api.ClientWrapper;
 import commands.*;
-import discord4j.core.event.domain.interaction.ChatInputAutoCompleteEvent;
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.event.domain.lifecycle.ReadyEvent;
-import discord4j.core.object.command.ApplicationCommandInteractionOption;
-import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
-import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
+
 import embed.ErrorEmbed;
 import enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.event.interaction.AutocompleteCreateEvent;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.AutocompleteInteraction;
+import org.javacord.api.interaction.SlashCommandOptionChoice;
 import post.PostMessages;
 import post.api.PostFetchException;
 import post.autocomplete.AutocompleteException;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public class Launcher {
@@ -30,48 +25,44 @@ public class Launcher {
         commandMap.put("posts", new PostsCommand());
         commandMap.put("history", new HistoryCommand());
         commandMap.put("favorites", new FavoritesCommand());
-        commandMap.values().forEach(CommandUtil::createCommand);
     }
 
     public static void main(String[] args) {
-        Flux<Void> ready = ClientWrapper.getClient().on(ReadyEvent.class, event -> {
-            PostMessages.setListeners();
-            log.info("Bot is ready");
-            return Mono.empty();
-        });
-
-        Flux<Void> slashCommand = ClientWrapper.getClient().on(ChatInputInteractionEvent.class, Launcher::handleSlashCommand);
-        Flux<Void> autocomplete = ClientWrapper.getClient().on(ChatInputAutoCompleteEvent.class, Launcher::handleAutocomplete);
-
-        Mono.when(ready, slashCommand, autocomplete).block();
+        ClientWrapper.getApi().addSlashCommandCreateListener(Launcher::handleSlashCommand);
+        ClientWrapper.getApi().addAutocompleteCreateListener(Launcher::handleAutocomplete);
+        ClientWrapper.getApi().addMessageComponentCreateListener(PostMessages::handleInteraction);
     }
 
-    private static Mono<Void> handleSlashCommand(ChatInputInteractionEvent event) {
+    private static void handleSlashCommand(SlashCommandCreateEvent event) {
         try {
-            return commandMap.get(event.getCommandName()).apply(event);
+            commandMap.get(event.getSlashCommandInteraction().getCommandName()).apply(event);
         } catch (CommandException| PostFetchException e) {
             log.error(e.getMessage(), e);
-            return event.reply().withEmbeds(ErrorEmbed.create(e.getMessage()));
+            event.getInteraction().createImmediateResponder()
+                    .addEmbed(ErrorEmbed.create(e.getMessage()))
+                    .respond();
         }
     }
 
-    private static Mono<Void> handleAutocomplete(ChatInputAutoCompleteEvent event) {
+    private static void handleAutocomplete(AutocompleteCreateEvent event) {
         try {
-            PostSite postSite = PostSite.findByName(event.getOption("site")
-                    .map(ApplicationCommandInteractionOption::getValue)
-                    .flatMap(x -> x.map(ApplicationCommandInteractionOptionValue::asString))
-                    .orElseThrow(() -> new AutocompleteException("Invalid site")));
+            AutocompleteInteraction interaction = event.getAutocompleteInteraction();
+            Optional<String> optOption = interaction.getOptionStringValueByName("site");
+
+            PostSite postSite = optOption.map(PostSite::findByName)
+                    .orElseThrow(() -> new AutocompleteException("Invalid site"));
 
             if (postSite.getPostApi().hasAutocomplete()) {
-                List<ApplicationCommandOptionChoiceData> list = postSite.getPostApi().autocomplete(
-                        event.getFocusedOption().getValue().map(ApplicationCommandInteractionOptionValue::asString).orElse(""));
-                return event.respondWithSuggestions(list);
-            }
+                String enteredText = interaction.getOptionStringValueByName("tags").orElse("");
 
-            return Mono.empty();
+                List<SlashCommandOptionChoice> list = postSite.getPostApi().autocomplete(enteredText);
+                event.getAutocompleteInteraction().respondWithChoices(list);
+            } else {
+                event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList());
+            }
         } catch (AutocompleteException e) {
             log.error(e.getMessage(), e);
-            return Mono.empty();
+            event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList());
         }
     }
 }

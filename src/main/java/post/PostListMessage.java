@@ -1,15 +1,14 @@
 package post;
 
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.entity.Message;
-import discord4j.core.spec.MessageEditSpec;
 import embed.ErrorEmbed;
 import embed.PostEmbedOptions;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageUpdater;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import post.api.PostFetchException;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +18,7 @@ public abstract class PostListMessage extends PostMessage {
     @Getter
     private final List<PostResolvableEntry> postList;
 
-    protected PostListMessage(List<PostResolvableEntry> postList, ChatInputInteractionEvent event) {
+    protected PostListMessage(List<PostResolvableEntry> postList, SlashCommandCreateEvent event) {
         super(event);
         this.postList = postList;
     }
@@ -52,12 +51,7 @@ public abstract class PostListMessage extends PostMessage {
 
     public void editMessage() {
         try {
-            Message message = getEvent().getReply().block();
-
-            if (message == null) {
-                log.info("");
-                return;
-            }
+            Message message = getMessage();
 
             Optional<Post> optionalPost = getCurrentPost();
 
@@ -71,21 +65,22 @@ public abstract class PostListMessage extends PostMessage {
 
             PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions);
 
-            MessageEditSpec.Builder builder = MessageEditSpec.builder()
-                    .contentOrNull(postMessageable.getContent());
-
+            MessageUpdater updater = message.createUpdater();
+            if (postMessageable.getContent() != null) {
+                updater.setContent(postMessageable.getContent());
+            }
             if (postMessageable.getEmbed() != null) {
-                builder.embeds(Collections.singletonList(postMessageable.getEmbed()));
+                updater.setEmbed(postMessageable.getEmbed());
             }
 
-            message.edit(builder.build()).block();
+            updater.applyChanges().join();
         } catch (PostFetchException e) {
             log.error("Error fetching post while editing message", e);
         }
     }
 
     private PostEmbedOptions toPostEmbedOptions(Post post, PostResolvableEntry entry) {
-        String description = "Favorites for " + getEvent().getInteraction().getUser().getMention();
+        String description = "Favorites for " + getEvent().getInteraction().getUser().getMentionTag();
         return PostEmbedOptions.builder()
                 .post(post)
                 .entry(entry)

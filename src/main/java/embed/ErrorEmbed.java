@@ -1,29 +1,29 @@
 package embed;
 
 import api.ClientWrapper;
-import discord4j.core.object.entity.User;
-import discord4j.core.spec.EmbedCreateSpec;
-import discord4j.rest.util.Color;
 import lombok.experimental.UtilityClass;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.user.User;
 
+import java.awt.*;
 import java.time.Instant;
 
 @UtilityClass
 public class ErrorEmbed {
 
-    public static EmbedCreateSpec create(String message) {
-        EmbedCreateSpec.Builder embedCreateSpec = EmbedCreateSpec.builder()
-                .title("Error")
-                .description(message)
-                .color(Color.RED)
-                .timestamp(Instant.now());
+    public static EmbedBuilder create(String message) {
+        EmbedBuilder embedCreateSpec = new EmbedBuilder()
+                .setTitle("Error")
+                .setDescription(message)
+                .setColor(Color.RED)
+                .setTimestamp(Instant.now());
 
-        User self = ClientWrapper.getClient().getSelf().block();
+        User self = ClientWrapper.getApi().getYourself();
 
         if (self != null) {
-            embedCreateSpec.footer(self.getUsername(), self.getAvatarUrl());
+            embedCreateSpec.setFooter(self.getName(), self.getAvatar());
         }
 
-        return embedCreateSpec.build();
+        return embedCreateSpec;
     }
 }
