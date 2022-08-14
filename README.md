@@ -23,3 +23,6 @@ db=database_name
 user=database_user
 password=database_password
 ```
+
+## Known issues
+- Autocomplete in these boorus works slightly differently from Discord's slash commands. It is not possible to have autocomplete for multiple results in Discord. Therefore you can only use autocomplete for 1 string at a time.
