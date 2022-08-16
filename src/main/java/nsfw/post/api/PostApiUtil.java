@@ -2,7 +2,6 @@ package nsfw.post.api;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,7 +27,7 @@ public class PostApiUtil {
 
             if (response.statusCode() != 200) {
                 log.error("Received response with code {}, body:{}", response.statusCode(), response.body());
-                throw new PostApiException("Error fetching autocomplete");
+                throw new PostApiException();
             }
 
             return objectMapper.readValue(response.body(), javaType);

@@ -36,6 +36,14 @@ public interface PostApi {
         return Optional.empty();
     }
 
+    PostQueryResult<Post> getPosts(String url) throws PostFetchException;
+
+    AutocompleteResult[] getAutocompleteResult(String url) throws AutocompleteException;
+
+    Class<? extends AutocompleteResult> getAutocompleteResultClass();
+
+    Class<? extends Post> getPostClass();
+
     default int fetchCount(String tags) throws PostFetchException {
         return getPosts(getFetchByTagsAndPageUrl(tags, 0)).getCount();
     }
@@ -66,11 +74,4 @@ public interface PostApi {
                 .collect(Collectors.toList());
     }
 
-    PostQueryResult<Post> getPosts(String url) throws PostFetchException;
-
-    AutocompleteResult[] getAutocompleteResult(String url) throws AutocompleteException;
-
-    Class<? extends Post> getPostClass();
-
-    Class<? extends AutocompleteResult> getAutocompleteResultClass();
 }

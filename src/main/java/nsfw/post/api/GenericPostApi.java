@@ -34,7 +34,7 @@ public abstract class GenericPostApi implements PostApi {
 
             return result;
         } catch (PostApiException e) {
-            throw new PostFetchException(e.getMessage(), e);
+            throw new PostFetchException("Error fetching post", e);
         }
     }
 
@@ -44,7 +44,7 @@ public abstract class GenericPostApi implements PostApi {
             JavaType javaType = objectMapper.getTypeFactory().constructArrayType(getAutocompleteResultClass());
             return PostApiUtil.getResponseAsClass(javaType, new ObjectMapper(), autocompleteUrl);
         } catch (PostApiException e) {
-            throw new AutocompleteException(e.getMessage(), e);
+            throw new AutocompleteException("Error fetching autocomplete", e);
         }
     }
 }

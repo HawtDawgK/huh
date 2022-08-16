@@ -3,6 +3,7 @@ package nsfw.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import nsfw.post.api.PostApi;
+import nsfw.post.api.e621.E621Api;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 import nsfw.post.api.danbooru.DanbooruApi;
 import nsfw.post.api.gelbooru.GelbooruApi;
@@ -21,7 +22,8 @@ public enum PostSite {
     GELBOORU("Gelbooru", new GelbooruApi()),
     XBOORU("Xbooru", new XbooruApi()),
     TBIB("The Big Imageboard", new TbibApi()),
-    HYPNOHUB("Hypnohub", new HypnohubApi());
+    HYPNOHUB("Hypnohub", new HypnohubApi()),
+    E621("e621", new E621Api());
 
     private final String name;
     private final PostApi postApi;
