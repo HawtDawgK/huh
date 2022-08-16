@@ -1,4 +1,4 @@
-package nsfw.post.api.generic;
+package nsfw.post.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;

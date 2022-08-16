@@ -42,7 +42,6 @@ public class PostApiMessage extends PostMessage {
         optionalPost.ifPresent(post -> {
             postCache.put(post);
             getEvent().getSlashCommandInteraction().getChannel().ifPresent(ch ->  postHistory.addPost(ch, post));
-//            postHistory.addPost(getEvent().getSlashCommandInteraction().getChannel().get());
         });
 
         return optionalPost.orElseThrow(() -> new PostFetchException("post not found"));

@@ -24,7 +24,7 @@ public enum PostSite {
     HYPNOHUB("Hypnohub", new HypnohubApi());
 
     private final String name;
-    private final PostApi<?, ?, ?> postApi;
+    private final PostApi postApi;
 
     public SlashCommandOptionChoice toSlashCommandOptionChoice() {
         return SlashCommandOptionChoice.create(name, name);

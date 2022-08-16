@@ -1,10 +1,10 @@
 package nsfw.post.api.hypnohub;
 
 import nsfw.enums.PostSite;
-import nsfw.post.api.PostApi;
-import nsfw.post.autocomplete.AutocompleteResult;
+import nsfw.post.Post;
+import nsfw.post.api.GenericPostApi;
 
-public class HypnohubApi implements PostApi<nsfw.post.api.generic.PostQueryResult<HypnohubPost>, HypnohubPost, AutocompleteResult> {
+public class HypnohubApi extends GenericPostApi {
 
     @Override
     public PostSite getSite() {
@@ -29,5 +29,10 @@ public class HypnohubApi implements PostApi<nsfw.post.api.generic.PostQueryResul
     @Override
     public String getFetchByTagsAndPageUrl(String tags, int page) {
         return getBaseUrl() + "index.php?page=dapi&s=post&q=index&tags=" + tags + "&pid=" + page;
+    }
+
+    @Override
+    public Class<? extends Post> getPostClass() {
+        return HypnohubPost.class;
     }
 }

@@ -3,7 +3,7 @@ package nsfw.post.api.gelbooru;
 import nsfw.enums.PostSite;
 import nsfw.post.api.GenericPostApi;
 
-public class GelbooruApi implements GenericPostApi {
+public class GelbooruApi extends GenericPostApi {
 
     @Override
     public String getBaseUrl() {

@@ -1,14 +1,8 @@
 package nsfw.post.autocomplete;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
+public interface AutocompleteResult {
 
-@Getter
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class AutocompleteResult {
+    String getLabel();
 
-    private String label;
-
-    private String value;
-
+    String getValue();
 }

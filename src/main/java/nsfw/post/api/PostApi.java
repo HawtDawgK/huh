@@ -1,30 +1,17 @@
 package nsfw.post.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import nsfw.enums.PostSite;
 import nsfw.post.Post;
 import nsfw.post.autocomplete.AutocompleteException;
 import nsfw.post.autocomplete.AutocompleteResult;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public interface PostApi<R extends nsfw.post.api.generic.PostQueryResult<P>, P extends Post, A extends AutocompleteResult> {
-
-    ObjectMapper xmlMapper = new XmlMapper().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-
-    ObjectMapper jsonMapper = new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+public interface PostApi {
 
     /**
      * @return the base url with trailing /
@@ -57,8 +44,8 @@ public interface PostApi<R extends nsfw.post.api.generic.PostQueryResult<P>, P e
         return getFetchByTagsAndPageUrl("id:" + id, 0);
     }
 
-    default P fetchById(long id) throws PostFetchException {
-        R result = getPosts(getFetchByIdUrl(id));
+    default Post fetchById(long id) throws PostFetchException {
+        PostQueryResult<Post> result = getPosts(getFetchByIdUrl(id));
         return result.getPosts().stream().findFirst()
                 .orElseThrow(() -> new PostFetchException("No post found"));
     }
@@ -68,8 +55,8 @@ public interface PostApi<R extends nsfw.post.api.generic.PostQueryResult<P>, P e
             + PostApiUtil.encodeSpaces(tags) + "&pid=" + page;
     }
 
-    default Optional<P> fetchByTagsAndPage(String tags, int page) throws PostFetchException {
-        R result = getPosts(getFetchByTagsAndPageUrl(tags, page));
+    default Optional<Post> fetchByTagsAndPage(String tags, int page) throws PostFetchException {
+        PostQueryResult<Post> result = getPosts(getFetchByTagsAndPageUrl(tags, page));
         return result.getPosts().stream().findFirst();
     }
 
@@ -79,54 +66,11 @@ public interface PostApi<R extends nsfw.post.api.generic.PostQueryResult<P>, P e
                 .collect(Collectors.toList());
     }
 
-    default ObjectMapper getXmlMapper() {
-        return xmlMapper;
-    }
+    PostQueryResult<Post> getPosts(String url) throws PostFetchException;
 
-    default ObjectMapper getJsonMapper() {
-        return jsonMapper;
-    }
+    AutocompleteResult[] getAutocompleteResult(String url) throws AutocompleteException;
 
-    default R getPosts(String urlString) throws PostFetchException {
-        try {
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlString)).GET().build();
-            HttpResponse<String> response = HttpClient.newHttpClient()
-                    .send(request, HttpResponse.BodyHandlers.ofString());
+    Class<? extends Post> getPostClass();
 
-            if (response.statusCode() != 200) {
-                System.out.println(response.body());
-                throw new PostFetchException("Error occurred fetching post");
-            }
-
-            R result = getXmlMapper().readValue(response.body(), new TypeReference<>() {});
-            result.getPosts().forEach(p -> p.setSite(getSite()));
-
-            return result;
-        } catch (IOException e) {
-            throw new PostFetchException(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new PostFetchException(e.getMessage(), e);
-        }
-    }
-
-    default A[] getAutocompleteResult(String urlString) throws AutocompleteException {
-        try {
-            String url = getAutocompleteUrl(urlString);
-
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new AutocompleteException("Error fetching autocomplete");
-            }
-
-            return getJsonMapper().readValue(response.body(), new TypeReference<>() { });
-        } catch (IOException e) {
-            throw new AutocompleteException(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new AutocompleteException(e.getMessage(), e);
-        }
-    }
+    Class<? extends AutocompleteResult> getAutocompleteResultClass();
 }

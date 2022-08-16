@@ -4,7 +4,6 @@ import nsfw.embed.EmbedService;
 import nsfw.embed.PostEmbedOptions;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.enums.PostSite;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageUpdater;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;

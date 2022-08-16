@@ -1,8 +1,6 @@
 package nsfw.db;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import nsfw.enums.PostSite;
 
 import java.io.Serial;

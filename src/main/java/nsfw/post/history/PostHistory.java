@@ -21,12 +21,12 @@ public class PostHistory {
 
     private final PostMessages postMessages;
 
-    private static final int maxLength = 100;
+    private static final int MAX_LENGTH = 100;
 
     private final HashMap<TextChannel, List<PostResolvableEntry>> history = new HashMap<>();
 
     public synchronized void addPost(TextChannel textChannel, Post post) {
-        history.putIfAbsent(textChannel, new LimitedSizeQueue<>(maxLength));
+        history.putIfAbsent(textChannel, new LimitedSizeQueue<>(MAX_LENGTH));
 
         PostResolvableEntry postResolvableEntry = new PostResolvableEntry(post.getId(), post.getSite(), Instant.now());
         history.get(textChannel).add(postResolvableEntry);
