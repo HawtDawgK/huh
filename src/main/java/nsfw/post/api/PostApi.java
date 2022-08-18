@@ -1,15 +1,13 @@
 package nsfw.post.api;
 
+import com.fasterxml.jackson.databind.JavaType;
 import nsfw.enums.PostSite;
 import nsfw.post.Post;
 import nsfw.post.autocomplete.AutocompleteException;
 import nsfw.post.autocomplete.AutocompleteResult;
-import org.javacord.api.interaction.SlashCommandOptionChoice;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public interface PostApi {
 
@@ -23,6 +21,8 @@ public interface PostApi {
     default boolean hasAutocomplete() {
         return true;
     }
+
+    JavaType getAutocompleteResultType();
 
     default String getAutocompleteUrl(String tags) {
         return getBaseUrl() + "autocomplete.php?q=" + tags;
@@ -38,11 +38,11 @@ public interface PostApi {
 
     PostQueryResult<Post> getPosts(String url) throws PostFetchException;
 
-    AutocompleteResult[] getAutocompleteResult(String url) throws AutocompleteException;
+    List<AutocompleteResult> autocomplete(String tags) throws AutocompleteException;
 
-    Class<? extends AutocompleteResult> getAutocompleteResultClass();
+    JavaType getPostType();
 
-    Class<? extends Post> getPostClass();
+    JavaType getPostQueryResultType();
 
     default int fetchCount(String tags) throws PostFetchException {
         return getPosts(getFetchByTagsAndPageUrl(tags, 0)).getCount();
@@ -66,12 +66,6 @@ public interface PostApi {
     default Optional<Post> fetchByTagsAndPage(String tags, int page) throws PostFetchException {
         PostQueryResult<Post> result = getPosts(getFetchByTagsAndPageUrl(tags, page));
         return result.getPosts().stream().findFirst();
-    }
-
-    default List<SlashCommandOptionChoice> autocomplete(String input) throws AutocompleteException {
-        return Arrays.stream(getAutocompleteResult(input))
-                .map(x -> SlashCommandOptionChoice.create(x.getLabel(), x.getValue()))
-                .collect(Collectors.toList());
     }
 
 }

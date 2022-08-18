@@ -1,7 +1,7 @@
 package nsfw.post.api.gelbooru;
 
 import nsfw.enums.PostSite;
-import nsfw.post.api.GenericPostApi;
+import nsfw.post.api.generic.GenericPostApi;
 
 public class GelbooruApi extends GenericPostApi {
 

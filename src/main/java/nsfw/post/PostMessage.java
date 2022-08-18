@@ -27,7 +27,7 @@ public abstract class PostMessage {
 
     private EmbedService embedService;
 
-    private PostMessages postMessages;
+    private PostMessageCache postMessageCache;
 
     private int page;
 
@@ -41,7 +41,7 @@ public abstract class PostMessage {
         this.event = event;
         this.postService = applicationContext.getBean(PostService.class);
         this.embedService = applicationContext.getBean(EmbedService.class);
-        this.postMessages = applicationContext.getBean(PostMessages.class);
+        this.postMessageCache = applicationContext.getBean(PostMessageCache.class);
     }
 
     public abstract Post getCurrentPost() throws PostFetchException;
@@ -93,7 +93,7 @@ public abstract class PostMessage {
 
             PostResolvableEntry newEntry = new PostResolvableEntry(currentResolvable.getPostId(),
                     currentResolvable.getPostSite(), Instant.now());
-            postMessages.onFavoriteEvent(new FavoriteEvent(user, newEntry, FavoriteEventType.ADDED));
+            postMessageCache.onFavoriteEvent(new FavoriteEvent(user, newEntry, FavoriteEventType.ADDED));
             event.getMessageComponentInteraction()
                     .createImmediateResponder()
                     .setContent("Successfully stored favorite.")
@@ -137,7 +137,7 @@ public abstract class PostMessage {
 
         // Only author can delete the message
         if (reactingUser.equals(author)) {
-            postMessages.removePost(this);
+            postMessageCache.removePost(this);
             buttonInteractionEvent.getMessageComponentInteraction().getMessage().delete().join();
         } else {
             buttonInteractionEvent.getMessageComponentInteraction()

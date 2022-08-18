@@ -2,7 +2,7 @@ package nsfw.post.api.rule34;
 
 import nsfw.enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.api.GenericPostApi;
+import nsfw.post.api.generic.GenericPostApi;
 
 import java.util.Optional;
 

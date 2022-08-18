@@ -3,7 +3,7 @@ package nsfw.post.history;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.post.Post;
-import nsfw.post.PostMessages;
+import nsfw.post.PostMessageCache;
 import nsfw.util.LimitedSizeQueue;
 import org.javacord.api.entity.channel.TextChannel;
 import nsfw.post.PostResolvableEntry;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostHistory {
 
-    private final PostMessages postMessages;
+    private final PostMessageCache postMessageCache;
 
     private static final int MAX_LENGTH = 100;
 
@@ -32,7 +32,7 @@ public class PostHistory {
         history.get(textChannel).add(postResolvableEntry);
 
         HistoryEvent historyEvent = new HistoryEvent(postResolvableEntry, textChannel);
-        postMessages.onHistoryEvent(historyEvent);
+        postMessageCache.onHistoryEvent(historyEvent);
     }
 
     public List<PostResolvableEntry> getHistory(TextChannel textChannel) {

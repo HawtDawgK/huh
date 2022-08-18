@@ -86,7 +86,7 @@ public class FavoritesMessage extends PostListMessage {
 
         PostResolvableEntry postResolvableEntry = getPostList().get(getPage());
         getPostService().removeFavorite(reactingUser, postResolvableEntry);
-        getPostMessages().onFavoriteEvent(new FavoriteEvent(user, postResolvableEntry, FavoriteEventType.REMOVED));
+        getPostMessageCache().onFavoriteEvent(new FavoriteEvent(user, postResolvableEntry, FavoriteEventType.REMOVED));
         event.getMessageComponentInteraction().createImmediateResponder()
                 .setContent("Successfully removed favorite.")
                 .setFlags(MessageFlag.EPHEMERAL)

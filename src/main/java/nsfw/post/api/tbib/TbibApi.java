@@ -1,7 +1,7 @@
 package nsfw.post.api.tbib;
 
 import nsfw.enums.PostSite;
-import nsfw.post.api.GenericPostApi;
+import nsfw.post.api.generic.GenericPostApi;
 
 public class TbibApi extends GenericPostApi {
 

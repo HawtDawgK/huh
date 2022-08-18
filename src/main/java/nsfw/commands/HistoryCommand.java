@@ -1,34 +1,31 @@
 package nsfw.commands;
 
+import lombok.RequiredArgsConstructor;
 import nsfw.embed.EmbedService;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandBuilder;
 import nsfw.post.PostMessage;
-import nsfw.post.PostMessages;
+import nsfw.post.PostMessageCache;
 import nsfw.post.PostResolvableEntry;
 import nsfw.post.history.HistoryMessage;
 import nsfw.post.history.PostHistory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class HistoryCommand implements Command {
 
-    @Autowired
-    private EmbedService embedService;
+    private final EmbedService embedService;
 
-    @Autowired
-    private PostMessages postMessages;
+    private final PostMessageCache postMessageCache;
 
-    @Autowired
-    private PostHistory postHistory;
+    private final PostHistory postHistory;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
 
     @Override
     public SlashCommandBuilder toSlashCommandBuilder() {
@@ -51,7 +48,7 @@ public class HistoryCommand implements Command {
         PostMessage postMessage = new HistoryMessage(applicationContext, postHistoryFromChannel, event);
         postMessage.initReply();
 
-        postMessages.addPost(postMessage);
+        postMessageCache.addPost(postMessage);
     }
 
 }

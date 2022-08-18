@@ -3,14 +3,12 @@ package nsfw.commands;
 import lombok.RequiredArgsConstructor;
 import nsfw.api.ClientWrapper;
 import nsfw.embed.EmbedService;
-import nsfw.enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
+import nsfw.post.autocomplete.AutocompleteService;
 import org.javacord.api.event.interaction.AutocompleteCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
-import org.javacord.api.interaction.AutocompleteInteraction;
-import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.springframework.stereotype.Component;
-import nsfw.post.PostMessages;
+import nsfw.post.PostMessageCache;
 import nsfw.post.api.PostFetchException;
 import nsfw.post.autocomplete.AutocompleteException;
 
@@ -36,7 +34,9 @@ public class CommandHandler {
 
     private final FavoritesCommand favoritesCommand;
 
-    private final PostMessages postMessages;
+    private final PostMessageCache postMessageCache;
+
+    private final AutocompleteService autocompleteService;
 
     @PostConstruct
     public void init() {
@@ -48,7 +48,7 @@ public class CommandHandler {
 
         clientWrapper.getApi().addSlashCommandCreateListener(this::handleSlashCommand);
         clientWrapper.getApi().addAutocompleteCreateListener(this::handleAutocomplete);
-        clientWrapper.getApi().addMessageComponentCreateListener(postMessages::handleInteraction);
+        clientWrapper.getApi().addMessageComponentCreateListener(postMessageCache::handleInteraction);
     }
 
     private void handleSlashCommand(SlashCommandCreateEvent event) {
@@ -65,20 +65,7 @@ public class CommandHandler {
 
     private void handleAutocomplete(AutocompleteCreateEvent event) {
         try {
-            AutocompleteInteraction interaction = event.getAutocompleteInteraction();
-            Optional<String> optOption = interaction.getOptionStringValueByName("site");
-
-            PostSite postSite = optOption.map(PostSite::findByName)
-                    .orElseThrow(() -> new AutocompleteException("Invalid site"));
-
-            if (postSite.getPostApi().hasAutocomplete()) {
-                String enteredText = interaction.getOptionStringValueByName("tags").orElse("");
-
-                List<SlashCommandOptionChoice> list = postSite.getPostApi().autocomplete(enteredText);
-                event.getAutocompleteInteraction().respondWithChoices(list);
-            } else {
-                event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList());
-            }
+            autocompleteService.autocomplete(event);
         } catch (AutocompleteException e) {
             log.error(e.getMessage(), e);
             event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList());

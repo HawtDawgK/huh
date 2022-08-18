@@ -1,49 +1,37 @@
 package nsfw.post;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import nsfw.enums.PostSite;
-import lombok.Getter;
-import lombok.Setter;
-import nsfw.util.CustomDateDeserializer;
 import nsfw.util.Formats;
 
 import java.util.Date;
 
-@Getter
-@Setter
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class Post {
+public interface Post {
 
-    private long id;
+    default PostResolvable toPostResolvable() {
+        return new PostResolvable(getId(), getSite());
+    }
 
-    private long score;
+    long getId();
 
-    private String fileUrl;
+    long getScore();
 
-    private String sampleUrl;
+    String getFileUrl();
 
-    private String tags;
+    String getSampleUrl();
 
-    private String rating;
+    String getTags();
 
-    @JsonDeserialize(using = CustomDateDeserializer.class)
-    private Date createdAt;
+    String getRating();
 
-    private PostSite site;
+    Date getCreatedAt();
 
-    public boolean isVideo() {
-        String[] splitUrl = fileUrl.split("\\.");
+    PostSite getSite();
+
+    default boolean isVideo() {
+        String[] splitUrl = getFileUrl().split("\\.");
 
         String fileExt = splitUrl[splitUrl.length - 1];
         return Formats.isVideo(fileExt);
-    }
-
-    public PostResolvable toPostResolvable() {
-        return new PostResolvable(getId(), getSite());
     }
 
 }

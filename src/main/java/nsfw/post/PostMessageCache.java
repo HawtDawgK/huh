@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
-public class PostMessages {
+public class PostMessageCache {
 
     private static final Map<Long, PostMessage> postMessageMap = new ConcurrentHashMap<>();
 

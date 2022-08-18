@@ -23,7 +23,7 @@ public class PostMessageFactory {
 
     private final PostService postService;
 
-    private final PostMessages postMessages;
+    private final PostMessageCache postMessageCache;
 
     private final ApplicationContext applicationContext;
 
@@ -42,7 +42,7 @@ public class PostMessageFactory {
         PostMessage postMessage = new PostApiMessage(applicationContext, event, postSite.getPostApi(), tags, maxCount);
         postMessage.initReply();
 
-        postMessages.addPost(postMessage);
+        postMessageCache.addPost(postMessage);
     }
 
     public void createListPostFromFavorites(SlashCommandCreateEvent event, User user) {
@@ -56,7 +56,7 @@ public class PostMessageFactory {
             PostMessage postMessage = new FavoritesMessage(applicationContext, favorites, user, event);
             postMessage.initReply();
 
-            postMessages.addPost(postMessage);
+            postMessageCache.addPost(postMessage);
         }
     }
 

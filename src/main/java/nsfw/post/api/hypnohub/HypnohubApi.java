@@ -1,8 +1,9 @@
 package nsfw.post.api.hypnohub;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import nsfw.enums.PostSite;
-import nsfw.post.Post;
-import nsfw.post.api.GenericPostApi;
+import nsfw.post.api.generic.GenericPostApi;
 
 public class HypnohubApi extends GenericPostApi {
 
@@ -32,7 +33,7 @@ public class HypnohubApi extends GenericPostApi {
     }
 
     @Override
-    public Class<? extends Post> getPostClass() {
-        return HypnohubPost.class;
+    public JavaType getPostType() {
+        return TypeFactory.defaultInstance().constructType(HypnohubPost.class);
     }
 }

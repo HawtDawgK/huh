@@ -2,11 +2,11 @@ package nsfw.post.api.danbooru;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import nsfw.enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.Post;
 import nsfw.post.api.*;
-import nsfw.post.autocomplete.AutocompleteResult;
+import nsfw.post.api.generic.GenericPostApi;
 
 import java.util.Optional;
 
@@ -55,13 +55,14 @@ public class DanbooruApi extends GenericPostApi {
     }
 
     @Override
-    public Class<? extends Post> getPostClass() {
-        return DanbooruPost.class;
+    public JavaType getPostType() {
+        return TypeFactory.defaultInstance().constructType(DanbooruPost.class);
     }
 
     @Override
-    public Class<? extends AutocompleteResult> getAutocompleteResultClass() {
-        return DanbooruAutocompleteResult.class;
+    public JavaType getAutocompleteResultType() {
+        return TypeFactory.defaultInstance()
+                .constructParametricType(DanbooruAutocompleteResult.class, getPostType());
     }
 
 }
