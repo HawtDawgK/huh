@@ -13,6 +13,8 @@ import java.util.Optional;
 @Slf4j
 public class DanbooruApi extends GenericPostApi {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public String getBaseUrl() {
         return "https://danbooru.donmai.us/";
@@ -43,11 +45,11 @@ public class DanbooruApi extends GenericPostApi {
         String encodedTags = PostApiUtil.encodeSpaces(tags);
         String urlString = getBaseUrl() + "counts/posts.json?tags=" + encodedTags;
 
-        JavaType javaType = new ObjectMapper().getTypeFactory().constructType(DanbooruCountsResponse.class);
+        JavaType javaType = TypeFactory.defaultInstance().constructType(DanbooruCountsResponse.class);
 
         try {
             DanbooruCountsResponse danbooruCountsResponse = PostApiUtil
-                    .getResponseAsClass(javaType, new ObjectMapper(), urlString);
+                    .getResponseAsClass(javaType, objectMapper, urlString);
             return danbooruCountsResponse.getCounts().getPosts();
         } catch (PostApiException e) {
             throw new PostFetchException(e.getMessage(), e);
@@ -61,8 +63,7 @@ public class DanbooruApi extends GenericPostApi {
 
     @Override
     public JavaType getAutocompleteResultType() {
-        return TypeFactory.defaultInstance()
-                .constructParametricType(DanbooruAutocompleteResult.class, getPostType());
+        return TypeFactory.defaultInstance().constructType(DanbooruAutocompleteResult.class);
     }
 
 }

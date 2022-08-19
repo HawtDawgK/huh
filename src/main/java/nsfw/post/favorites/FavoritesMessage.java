@@ -80,7 +80,7 @@ public class FavoritesMessage extends PostListMessage {
             event.getMessageComponentInteraction().createImmediateResponder()
                     .setContent("Only the author can delete a favorite.")
                     .setFlags(MessageFlag.EPHEMERAL)
-                    .respond();
+                    .respond().join();
             return;
         }
 
@@ -90,7 +90,7 @@ public class FavoritesMessage extends PostListMessage {
         event.getMessageComponentInteraction().createImmediateResponder()
                 .setContent("Successfully removed favorite.")
                 .setFlags(MessageFlag.EPHEMERAL)
-                .respond();
+                .respond().join();
     }
 
 }

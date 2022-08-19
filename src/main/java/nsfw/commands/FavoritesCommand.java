@@ -1,17 +1,17 @@
 package nsfw.commands;
 
+import lombok.RequiredArgsConstructor;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.*;
 import nsfw.post.PostMessageFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class FavoritesCommand implements Command {
 
-    @Autowired
-    private PostMessageFactory postMessageFactory;
+    private final PostMessageFactory postMessageFactory;
 
     @Override
     public SlashCommandBuilder toSlashCommandBuilder() {
