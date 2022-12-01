@@ -19,10 +19,6 @@ public interface PostApi {
 
     PostSite getSite();
 
-    default boolean hasAutocomplete() {
-        return true;
-    }
-
     JavaType getAutocompleteResultType();
 
     default String getAutocompleteUrl(String tags) {
@@ -68,7 +64,6 @@ public interface PostApi {
         PostQueryResult<Post> result = getPosts(getFetchByTagsAndPageUrl(tags, page));
         return result.getPosts().stream().findFirst();
     }
-
 
     default void checkMaxTags(String tags) throws CommandException {
         Optional<Integer> optionalMaxTags = getMaxTags();

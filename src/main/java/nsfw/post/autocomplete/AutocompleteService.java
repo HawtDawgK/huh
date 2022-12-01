@@ -34,19 +34,15 @@ public class AutocompleteService {
                     .map(PostSite::findByName)
                     .orElseThrow(() -> new AutocompleteException("Invalid site"));
 
-            if (postSite.getPostApi().hasAutocomplete()) {
-                String tag = interaction.getOptionByName("tags")
-                        .flatMap(SlashCommandInteractionOption::getStringValue)
-                        .orElse("");
+            String tag = interaction.getOptionByName("tags")
+                    .flatMap(SlashCommandInteractionOption::getStringValue)
+                    .orElse("");
 
-                List<SlashCommandOptionChoice> choices = postSite.getPostApi().autocomplete(tag).stream()
-                        .map(result -> SlashCommandOptionChoice.create(result.getLabel(), result.getValue()))
-                        .toList();
+            List<SlashCommandOptionChoice> choices = postSite.getPostApi().autocomplete(tag).stream()
+                    .map(result -> SlashCommandOptionChoice.create(result.getLabel(), result.getValue()))
+                    .toList();
 
-                event.getAutocompleteInteraction().respondWithChoices(choices).join();
-            } else {
-                event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList()).join();
-            }
+            event.getAutocompleteInteraction().respondWithChoices(choices).join();
         } catch (AutocompleteException e) {
             log.error("Autocomplete error", e);
         }
