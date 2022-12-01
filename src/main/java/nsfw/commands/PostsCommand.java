@@ -12,7 +12,6 @@ import nsfw.post.api.PostFetchException;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -30,7 +29,7 @@ public class PostsCommand implements Command {
                         .setName("site")
                         .setDescription("Site to search posts for")
                         .setType(SlashCommandOptionType.STRING)
-                        .setChoices(Arrays.stream(PostSite.values()).map(PostSite::toSlashCommandOptionChoice).collect(Collectors.toList()))
+                        .setChoices(Arrays.stream(PostSite.values()).map(PostSite::toSlashCommandOptionChoice).toList())
                         .build())
                 .addOption(new SlashCommandOptionBuilder()
                         .setName("tags")
@@ -50,7 +49,7 @@ public class PostsCommand implements Command {
                 .orElse("");
 
         PostSite postSite = PostSite.findByName(siteName);
-        CommandUtil.checkMaxTags(postSite.getPostApi(), tags);
+        postSite.getPostApi().checkMaxTags(tags);
 
         postMessageFactory.createPost(event, tags, postSite);
     }

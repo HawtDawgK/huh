@@ -8,7 +8,6 @@ import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
-import nsfw.post.api.PostApi;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -36,10 +35,8 @@ public class CommandUtil {
     public static void checkNsfwChannel(SlashCommandInteraction interaction) throws CommandException {
         Optional<TextChannel> channel = interaction.getChannel();
 
-        if (channel.isPresent() && channel.get() instanceof ServerTextChannel) {
-            ServerTextChannel textChannel = (ServerTextChannel) channel.get();
-
-            if (!textChannel.isNsfw()) {
+        if (channel.isPresent() && channel.get() instanceof ServerTextChannel serverTextChannel) {
+            if (!serverTextChannel.isNsfw()) {
                 throw new CommandException("This command can only be used in NSFW channels.");
             }
         } else {
@@ -47,17 +44,4 @@ public class CommandUtil {
             throw new CommandException("Could not find text channel.");
         }
     }
-
-    public static void checkMaxTags(PostApi postApi, String tags) throws CommandException {
-        Optional<Integer> optionalMaxTags = postApi.getMaxTags();
-        if (optionalMaxTags.isPresent()) {
-            int maxTags = optionalMaxTags.get();
-            String[] tagParts = tags.split(" ");
-
-            if (tagParts.length > maxTags) {
-                throw new CommandException("Can search for max " + maxTags + ", you entered " + tagParts.length);
-            }
-        }
-    }
-
 }

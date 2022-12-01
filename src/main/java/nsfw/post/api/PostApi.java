@@ -1,6 +1,7 @@
 package nsfw.post.api;
 
 import com.fasterxml.jackson.databind.JavaType;
+import nsfw.commands.CommandException;
 import nsfw.enums.PostSite;
 import nsfw.post.Post;
 import nsfw.post.autocomplete.AutocompleteException;
@@ -68,4 +69,16 @@ public interface PostApi {
         return result.getPosts().stream().findFirst();
     }
 
+
+    default void checkMaxTags(String tags) throws CommandException {
+        Optional<Integer> optionalMaxTags = getMaxTags();
+        if (optionalMaxTags.isPresent()) {
+            int maxTags = optionalMaxTags.get();
+            String[] tagParts = tags.split(" ");
+
+            if (tagParts.length > maxTags) {
+                throw new CommandException("Can search for max " + maxTags + ", you entered " + tagParts.length);
+            }
+        }
+    }
 }
