@@ -5,6 +5,7 @@ import nsfw.enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandBuilder;
+import org.javacord.api.interaction.SlashCommandInteractionOption;
 import org.javacord.api.interaction.SlashCommandOptionBuilder;
 import org.javacord.api.interaction.SlashCommandOptionType;
 import nsfw.post.PostMessageFactory;
@@ -41,11 +42,13 @@ public class PostsCommand implements Command {
 
     @Override
     public void apply(SlashCommandCreateEvent event) throws CommandException, PostFetchException {
-        String siteName = event.getSlashCommandInteraction().getOptionStringValueByName("site")
+        String siteName = event.getSlashCommandInteraction().getOptionByName("site")
+                .flatMap(SlashCommandInteractionOption::getStringValue)
                 .orElseThrow(() -> new CommandException("Site is required"));
 
         String tags = event.getSlashCommandInteraction()
-                .getOptionStringValueByName("tags")
+                .getOptionByName("tags")
+                .flatMap(SlashCommandInteractionOption::getStringValue)
                 .orElse("");
 
         PostSite postSite = PostSite.findByName(siteName);

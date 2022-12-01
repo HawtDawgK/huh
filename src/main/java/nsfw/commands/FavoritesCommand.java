@@ -26,7 +26,8 @@ public class FavoritesCommand implements Command {
     @Override
     public void apply(SlashCommandCreateEvent event) throws CommandException {
         User user = event.getSlashCommandInteraction()
-                .getOptionUserValueByName("user")
+                .getOptionByName("user")
+                .flatMap(SlashCommandInteractionOption::getUserValue)
                 .orElse(event.getInteraction().getUser());
 
         postMessageFactory.createListPostFromFavorites(event, user);

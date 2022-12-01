@@ -1,19 +1,21 @@
 package nsfw.commands;
 
 import lombok.RequiredArgsConstructor;
-import nsfw.api.ClientWrapper;
-import nsfw.embed.EmbedService;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.autocomplete.AutocompleteService;
-import org.javacord.api.event.interaction.AutocompleteCreateEvent;
-import org.javacord.api.event.interaction.SlashCommandCreateEvent;
-import org.springframework.stereotype.Component;
+import nsfw.embed.EmbedService;
 import nsfw.post.PostMessageCache;
 import nsfw.post.api.PostFetchException;
-import nsfw.post.autocomplete.AutocompleteException;
+import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.SlashCommandInteraction;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -22,9 +24,7 @@ public class CommandHandler {
 
     private static final Map<String, Command> commandMap = new HashMap<>();
 
-    private final ClientWrapper clientWrapper;
-
-    private final CommandUtil commandUtil;
+    private final DiscordApi discordApi;
 
     private final EmbedService embedService;
 
@@ -36,24 +36,22 @@ public class CommandHandler {
 
     private final PostMessageCache postMessageCache;
 
-    private final AutocompleteService autocompleteService;
-
     @PostConstruct
     public void init() {
         commandMap.put("posts", postsCommand);
         commandMap.put("history", historyCommand);
         commandMap.put("favorites", favoritesCommand);
 
-        commandMap.values().forEach(commandUtil::createCommand);
+        commandMap.values().forEach(command -> discordApi.getServers()
+                .forEach(guild -> command.toSlashCommandBuilder().createForServer(guild).join()));
 
-        clientWrapper.getApi().addSlashCommandCreateListener(this::handleSlashCommand);
-        clientWrapper.getApi().addAutocompleteCreateListener(this::handleAutocomplete);
-        clientWrapper.getApi().addMessageComponentCreateListener(postMessageCache::handleInteraction);
+        discordApi.addSlashCommandCreateListener(this::handleSlashCommand);
+        discordApi.addMessageComponentCreateListener(postMessageCache::handleInteraction);
     }
 
     private void handleSlashCommand(SlashCommandCreateEvent event) {
         try {
-            CommandUtil.checkNsfwChannel(event.getSlashCommandInteraction());
+            checkNsfwChannel(event.getSlashCommandInteraction());
             commandMap.get(event.getSlashCommandInteraction().getCommandName()).apply(event);
         } catch (CommandException | PostFetchException e) {
             log.error(e.getMessage(), e);
@@ -63,12 +61,16 @@ public class CommandHandler {
         }
     }
 
-    private void handleAutocomplete(AutocompleteCreateEvent event) {
-        try {
-            autocompleteService.autocomplete(event);
-        } catch (AutocompleteException e) {
-            log.error(e.getMessage(), e);
-            event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList());
+    public void checkNsfwChannel(SlashCommandInteraction interaction) throws CommandException {
+        Optional<TextChannel> channel = interaction.getChannel();
+
+        if (channel.isPresent() && channel.get() instanceof ServerTextChannel serverTextChannel) {
+            if (!serverTextChannel.isNsfw()) {
+                throw new CommandException("This command can only be used in NSFW channels.");
+            }
+        } else {
+            log.error("Received ChatInputInteractionEvent for non-text channel {}", channel);
+            throw new CommandException("Could not find text channel.");
         }
     }
 }

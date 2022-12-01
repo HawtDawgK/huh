@@ -2,7 +2,7 @@ package nsfw.embed;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.api.ClientWrapper;
+import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class EmbedService {
 
-    private final ClientWrapper clientWrapper;
+    private final DiscordApi discordApi;
 
     public EmbedBuilder createPostEmbed(PostEmbedOptions options) {
         EmbedBuilder embedBuilder = new EmbedBuilder();
@@ -49,7 +49,7 @@ public class EmbedService {
                 .setColor(Color.RED)
                 .setTimestamp(Instant.now());
 
-        User self = clientWrapper.getApi().getYourself();
+        User self = discordApi.getYourself();
         embedCreateSpec.setFooter(self.getName(), self.getAvatar());
 
         return embedCreateSpec;
@@ -62,7 +62,7 @@ public class EmbedService {
                 .setColor(Color.RED)
                 .setTimestamp(Instant.now());
 
-        User self = clientWrapper.getApi().getYourself();
+        User self = discordApi.getYourself();
         embedBuilder.setFooter(self.getName(), self.getAvatar());
 
         return embedBuilder;
