@@ -3,7 +3,6 @@ package nsfw.commands;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.embed.EmbedService;
-import nsfw.post.PostMessageCache;
 import nsfw.post.api.PostFetchException;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -34,8 +33,6 @@ public class CommandHandler {
 
     private final FavoritesCommand favoritesCommand;
 
-    private final PostMessageCache postMessageCache;
-
     @PostConstruct
     public void init() {
         commandMap.put("posts", postsCommand);
@@ -46,7 +43,6 @@ public class CommandHandler {
                 .forEach(guild -> command.toSlashCommandBuilder().createForServer(guild).join()));
 
         discordApi.addSlashCommandCreateListener(this::handleSlashCommand);
-        discordApi.addMessageComponentCreateListener(postMessageCache::handleInteraction);
     }
 
     private void handleSlashCommand(SlashCommandCreateEvent event) {

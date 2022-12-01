@@ -17,7 +17,7 @@ public class BotConfiguration {
     private String token;
 
     @Bean
-    public DiscordApi getDiscordApi() {
+    public DiscordApi discordApi() {
         return new DiscordApiBuilder()
                 .setToken(token)
                 .setWaitForServersOnStartup(true)
