@@ -52,11 +52,6 @@ public class E621Post implements Post {
     }
 
     @Override
-    public PostSite getSite() {
-        return PostSite.E621;
-    }
-
-    @Override
     public Date getCreatedAt() {
         return null;
     }

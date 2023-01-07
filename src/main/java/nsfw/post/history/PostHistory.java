@@ -2,8 +2,8 @@ package nsfw.post.history;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.Post;
 import nsfw.post.PostMessageCache;
+import nsfw.post.PostResolvable;
 import nsfw.util.LimitedSizeQueue;
 import org.javacord.api.entity.channel.TextChannel;
 import nsfw.post.PostResolvableEntry;
@@ -25,10 +25,11 @@ public class PostHistory {
 
     private final HashMap<TextChannel, List<PostResolvableEntry>> history = new HashMap<>();
 
-    public synchronized void addPost(TextChannel textChannel, Post post) {
+    public synchronized void addPost(TextChannel textChannel, PostResolvable postResolvable) {
         history.putIfAbsent(textChannel, new LimitedSizeQueue<>(MAX_LENGTH));
 
-        PostResolvableEntry postResolvableEntry = new PostResolvableEntry(post.getId(), post.getSite(), Instant.now());
+        PostResolvableEntry postResolvableEntry = new PostResolvableEntry(postResolvable.getPostId(),
+                postResolvable.getPostSite(), Instant.now());
         history.get(textChannel).add(postResolvableEntry);
 
         HistoryEvent historyEvent = new HistoryEvent(postResolvableEntry, textChannel);

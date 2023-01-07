@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import nsfw.enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
-import org.javacord.api.interaction.SlashCommandBuilder;
-import org.javacord.api.interaction.SlashCommandInteractionOption;
-import org.javacord.api.interaction.SlashCommandOptionBuilder;
-import org.javacord.api.interaction.SlashCommandOptionType;
+import org.javacord.api.interaction.*;
 import nsfw.post.PostMessageFactory;
 import nsfw.post.api.PostFetchException;
 import org.springframework.stereotype.Component;
@@ -23,9 +20,7 @@ public class PostsCommand implements Command {
 
     @Override
     public SlashCommandBuilder toSlashCommandBuilder() {
-        return new SlashCommandBuilder()
-                .setName("posts")
-                .setDescription("Search posts")
+        return SlashCommand.with("posts", "Search posts")
                 .addOption(new SlashCommandOptionBuilder()
                         .setName("site")
                         .setDescription("Site to search posts for")

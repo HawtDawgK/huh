@@ -2,9 +2,9 @@ package nsfw.embed;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NonNull;
 import nsfw.post.Post;
 import nsfw.post.PostResolvableEntry;
+import org.springframework.lang.NonNull;
 
 @Getter
 @Builder
@@ -20,6 +20,5 @@ public class PostEmbedOptions {
 
     private final PostResolvableEntry entry;
 
-    @NonNull
-    private final Post post;
+    private final @NonNull Post post;
 }

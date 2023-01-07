@@ -1,59 +1,77 @@
 package nsfw.post.api.generic;
 
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.Post;
-import nsfw.post.api.*;
-import nsfw.post.autocomplete.AutocompleteException;
+import nsfw.post.PostQueryResultImpl;
+import nsfw.post.api.PostApi;
+import nsfw.post.api.PostFetchOptions;
 import nsfw.post.autocomplete.AutocompleteResult;
 import nsfw.post.autocomplete.AutocompleteResultImpl;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public abstract class GenericPostApi implements PostApi {
 
-    private static final ObjectMapper objectMapper = new XmlMapper();
-
     @Override
-    public JavaType getPostType() {
-        return TypeFactory.defaultInstance().constructType(GenericPost.class);
+    public Optional<Integer> getMaxCount() {
+        return Optional.empty();
     }
 
     @Override
-    public JavaType getAutocompleteResultType() {
-        return TypeFactory.defaultInstance().constructType(AutocompleteResultImpl.class);
+    public Optional<Integer> getMaxTags() {
+        return Optional.empty();
+    }
+
+    @Override
+    public String getAutocompleteUrl(String tags) {
+        return getBaseUrl() + "/autocomplete.php?q=" + tags;
+    }
+
+    @Override
+    public JavaType getCountsResultType() {
+        return TypeFactory.defaultInstance().constructType(PostQueryResultImpl.class);
     }
 
     @Override
     public JavaType getPostQueryResultType() {
-        return TypeFactory.defaultInstance().constructParametricType(GenericPostQueryResult.class, getPostType());
-    }
-
-    public PostQueryResult<Post> getPosts(String urlString) throws PostFetchException {
-        try {
-            PostQueryResult<Post> result = PostApiUtil
-                    .getResponseAsClass(getPostQueryResultType(), objectMapper, urlString);
-
-            result.getPosts().forEach(p -> ((GenericPost) p).setSite(getSite()));
-
-            return result;
-        } catch (PostApiException e) {
-            throw new PostFetchException("Error fetching post", e);
-        }
+        return TypeFactory.defaultInstance().constructType(PostQueryResultImpl.class);
     }
 
     @Override
-    public List<AutocompleteResult> autocomplete(String tags) throws AutocompleteException {
-        try {
-            String autocompleteUrl = getAutocompleteUrl(tags);
-            JavaType javaType = objectMapper.getTypeFactory().constructCollectionType(List.class, getAutocompleteResultType());
-            return PostApiUtil.getResponseAsClass(javaType, new ObjectMapper(), autocompleteUrl);
-        } catch (PostApiException e) {
-            throw new AutocompleteException("Error fetching autocomplete", e);
+    public Class<? extends AutocompleteResult> getAutocompleteResultType() {
+        return AutocompleteResultImpl.class;
+    }
+
+    @Override
+    public boolean isJson() {
+        return false;
+    }
+
+    @Override
+    public String getUrl(PostFetchOptions options) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(getBaseUrl());
+
+        builder.queryParam("page", "dapi");
+        builder.queryParam("s", "post");
+        builder.queryParam("q", "index");
+        builder.queryParam("limit", "1");
+
+        Long id = options.getId();
+
+        if (id != null) {
+            builder.queryParam("id", id.toString());
+        } else {
+            if (options.getPage() != null) {
+                builder.queryParam("pid", options.getPage());
+            }
+            if (options.getTags() != null) {
+                builder.queryParam("tags", options.getTags());
+            }
         }
+
+        return builder.toUriString();
     }
 }

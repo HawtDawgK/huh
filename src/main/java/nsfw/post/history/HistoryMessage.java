@@ -1,36 +1,45 @@
 package nsfw.post.history;
 
-import lombok.extern.slf4j.Slf4j;
-import org.javacord.api.entity.channel.TextChannel;
-import org.javacord.api.event.interaction.SlashCommandCreateEvent;
-import nsfw.post.PostListMessage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
+import nsfw.post.PostMessage;
 import nsfw.post.PostResolvableEntry;
-import org.springframework.context.ApplicationContext;
+import nsfw.post.api.PostFetchOptions;
+import org.javacord.api.entity.channel.TextChannel;
 
 import java.util.List;
 
-@Slf4j
-public class HistoryMessage extends PostListMessage {
+@Log
+@RequiredArgsConstructor
+public class HistoryMessage extends PostMessage {
 
-    public HistoryMessage(ApplicationContext applicationContext,
-                          List<PostResolvableEntry> postList, SlashCommandCreateEvent event) {
-        super(applicationContext, postList, event);
-    }
+    private final List<PostResolvableEntry> posts;
 
-    @Override
+    private final TextChannel textChannel;
+
     public String getTitle() {
         return "Post history";
     }
 
     public synchronized void onHistoryEvent(HistoryEvent event) {
-        TextChannel messageChannel = getMessage().getChannel();
-
-        if (event.getChannel().equals(messageChannel)) {
+        if (textChannel.equals(event.channel())) {
             log.info("Received history event");
-
-            getPostList().add(event.getNewEntry());
-            editMessage();
+            posts.add(event.newEntry());
         }
     }
 
+    @Override
+    public int getCount() {
+        return posts.size();
+    }
+
+    @Override
+    public PostFetchOptions getPostFetchOptions() {
+        PostResolvableEntry currentEntry = posts.get(getPage());
+
+        return PostFetchOptions.builder()
+                .postSite(currentEntry.getPostSite())
+                .id(currentEntry.getPostId())
+                .build();
+    }
 }

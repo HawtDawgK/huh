@@ -4,11 +4,9 @@ import nsfw.post.Post;
 
 import java.util.List;
 
-public interface PostQueryResult<P extends Post> {
+public interface PostQueryResult extends CountResult {
 
     int getCount();
 
-    int getOffset();
-
-    List<P> getPosts();
+    List<Post> getPosts();
 }

@@ -1,15 +1,16 @@
 package nsfw.post;
 
 import lombok.RequiredArgsConstructor;
+import nsfw.post.favorites.FavoritesMessage;
+import nsfw.post.favorites.FavoritesService;
 import nsfw.embed.EmbedService;
 import nsfw.enums.PostSite;
 
 import lombok.extern.slf4j.Slf4j;
+import nsfw.post.api.PostFetchOptions;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import nsfw.post.api.PostFetchException;
-import nsfw.post.favorites.FavoritesMessage;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,40 +24,43 @@ public class PostMessageFactory {
 
     private final PostService postService;
 
+    private final FavoritesService favoritesService;
+
     private final PostMessageCache postMessageCache;
 
-    private final ApplicationContext applicationContext;
-
     public void createPost(SlashCommandCreateEvent event, String tags, PostSite postSite) throws PostFetchException {
-        int count = postSite.getPostApi().fetchCount(tags);
+        PostFetchOptions postFetchOptions = PostFetchOptions.builder()
+                .postSite(postSite)
+                .tags(tags)
+                .counts(true)
+                .build();
+        int count = postService.fetchCount(postFetchOptions);
 
         if (count == 0) {
             event.getSlashCommandInteraction().createImmediateResponder()
                     .addEmbed(embedService.createNoPostsFoundEmbed(tags))
-                    .respond();
+                    .respond().join();
             return;
         }
 
         int maxCount = postSite.getPostApi().getMaxCount().map(c -> Math.min(c, count)).orElse(count);
 
-        PostMessage postMessage = new PostApiMessage(applicationContext, event, postSite.getPostApi(), tags, maxCount);
-        postMessage.initReply();
+        PostMessage postMessage = new PostApiMessage(maxCount, tags, postSite);
 
-        postMessageCache.addPost(postMessage);
+        postMessageCache.addPost(event, postMessage);
     }
 
     public void createListPostFromFavorites(SlashCommandCreateEvent event, User user) {
-        List<PostResolvableEntry> favorites = postService.getFavorites(user.getId());
+        List<PostResolvableEntry> favorites = favoritesService.getFavorites(user.getId());
 
+        // TODO: Handle empty favorites
         if (favorites.isEmpty()) {
             event.getSlashCommandInteraction().createImmediateResponder()
                     .addEmbeds(embedService.createErrorEmbed("No favorites found."))
-                    .respond();
+                    .respond().join();
         } else {
-            PostMessage postMessage = new FavoritesMessage(applicationContext, favorites, user, event);
-            postMessage.initReply();
-
-            postMessageCache.addPost(postMessage);
+            PostMessage postMessage = new FavoritesMessage(user, favorites);
+            postMessageCache.addPost(event, postMessage);
         }
     }
 

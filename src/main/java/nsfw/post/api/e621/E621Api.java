@@ -3,9 +3,15 @@ package nsfw.post.api.e621;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import nsfw.enums.PostSite;
-import nsfw.post.api.generic.GenericPostApi;
+import nsfw.post.api.PostApi;
+import nsfw.post.api.PostFetchOptions;
+import nsfw.post.api.PostQueryResult;
+import nsfw.post.autocomplete.AutocompleteResult;
+import org.springframework.web.util.UriComponentsBuilder;
 
-public class E621Api extends GenericPostApi {
+import java.util.Optional;
+
+public class E621Api implements PostApi {
 
     @Override
     public String getBaseUrl() {
@@ -18,8 +24,36 @@ public class E621Api extends GenericPostApi {
     }
 
     @Override
-    public String getFetchByTagsAndPageUrl(String tags, int page) {
-        return getBaseUrl() + "posts.json?tags=" + tags + "&page=" + page + "&limit=1";
+    public JavaType getPostQueryResultType() {
+        return TypeFactory.defaultInstance().constructType(E621PostQueryResult.class);
+    }
+
+    @Override
+    public JavaType getCountsResultType() {
+        return TypeFactory.defaultInstance().constructType(PostQueryResult.class);
+    }
+
+    @Override
+    public String getUrl(PostFetchOptions postFetchOptions) {
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(getBaseUrl());
+        uriComponentsBuilder.path("posts.json");
+
+        uriComponentsBuilder.queryParamIfPresent("tags", Optional.ofNullable(postFetchOptions.getTags()));
+
+        String tags = "";
+        String url = "";
+
+        if (postFetchOptions.getId() != null) {
+            tags += "";
+        }
+        if (postFetchOptions.getId() != null) {
+            url += "tags=id:" + postFetchOptions.getId();
+        }
+        if (postFetchOptions.getPage() != null) {
+            url += "&pid=";
+        }
+
+        return  url + tags + "&page=" + postFetchOptions.getPage() + "&limit=1";
     }
 
     @Override
@@ -34,12 +68,13 @@ public class E621Api extends GenericPostApi {
     }
 
     @Override
-    public JavaType getAutocompleteResultType() {
-        return TypeFactory.defaultInstance().constructParametricType(E621AutocompleteResult.class, getPostType());
+    public boolean isJson() {
+        return false;
     }
 
     @Override
-    public JavaType getPostType() {
-        return TypeFactory.defaultInstance().constructType(E621Post.class);
+    public Class<? extends AutocompleteResult> getAutocompleteResultType() {
+        return E621AutocompleteResult.class;
     }
+
 }

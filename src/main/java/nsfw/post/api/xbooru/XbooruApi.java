@@ -1,6 +1,7 @@
 package nsfw.post.api.xbooru;
 
 import nsfw.enums.PostSite;
+import nsfw.post.api.PostFetchOptions;
 import nsfw.post.api.generic.GenericPostApi;
 
 public class XbooruApi extends GenericPostApi {
@@ -13,5 +14,10 @@ public class XbooruApi extends GenericPostApi {
     @Override
     public PostSite getSite() {
         return PostSite.XBOORU;
+    }
+
+    @Override
+    public String getUrl(PostFetchOptions options) {
+        return null;
     }
 }

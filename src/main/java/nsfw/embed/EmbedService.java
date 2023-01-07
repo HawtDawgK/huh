@@ -20,12 +20,8 @@ public class EmbedService {
     public EmbedBuilder createPostEmbed(PostEmbedOptions options) {
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
-        if (options.getTitle() != null) {
-            embedBuilder.setTitle(options.getTitle());
-        }
-        if (options.getDescription() != null) {
-            embedBuilder.setDescription(options.getDescription());
-        }
+        embedBuilder.setTitle(options.getTitle());
+        embedBuilder.setDescription(options.getDescription());
 
         if (options.getEntry() != null) {
             embedBuilder.setTimestamp(options.getEntry().getStoredAt());
@@ -35,8 +31,8 @@ public class EmbedService {
 
         embedBuilder.setImage(options.getPost().getFileUrl());
 
-        String footer = String.format("Page %d of %d \u2022 Score: %d", options.getPage() + 1, options.getCount(),
-                options.getPost().getScore());
+        String footer = String.format("Page %d of %d \u2022 Score: %d",
+                options.getPage() + 1, options.getCount(), options.getPost().getScore());
         embedBuilder.setFooter(footer);
 
         return embedBuilder;

@@ -15,13 +15,8 @@ public class PostResolvableEntry extends PostResolvable {
         this.storedAt = storedAt;
     }
 
-    @Override
-    public boolean equals(Object object) {
-        return super.equals(object);
+    public static PostResolvableEntry fromPostResolvable(PostResolvable postResolvable) {
+        return new PostResolvableEntry(postResolvable.getPostId(), postResolvable.getPostSite(), Instant.now());
     }
 
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
 }

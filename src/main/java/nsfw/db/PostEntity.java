@@ -2,8 +2,8 @@ package nsfw.db;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import nsfw.enums.PostSite;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.util.Date;

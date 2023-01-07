@@ -53,7 +53,7 @@ public class CommandHandler {
             log.error(e.getMessage(), e);
             event.getInteraction().createImmediateResponder()
                     .addEmbed(embedService.createErrorEmbed(e.getMessage()))
-                    .respond();
+                    .respond().join();
         }
     }
 

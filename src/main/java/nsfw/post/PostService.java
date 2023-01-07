@@ -1,55 +1,105 @@
 package nsfw.post;
 
-import nsfw.db.PostEntity;
-import nsfw.db.PostRepository;
-import nsfw.post.api.PostFetchException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.RequiredArgsConstructor;
+import nsfw.post.api.*;
 import nsfw.post.cache.PostCache;
-import org.javacord.api.entity.user.User;
-import org.springframework.beans.factory.annotation.Autowired;
+import nsfw.util.TagUtil;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Service
+@RequiredArgsConstructor
 public class PostService {
 
-    @Autowired
-    private PostRepository postRepository;
+    private final PostCache postCache;
 
-    @Autowired
-    private PostMapper postMapper;
+    private final WebClient webClient;
 
-    @Autowired
-    private PostCache postCache;
+    private final ObjectMapper objectMapper;
 
-    public boolean hasFavorite(User user, PostResolvable postResolvable) {
-        return postRepository.existsByUserIdAndPostIdAndSiteName(user.getId(),
-                postResolvable.getPostId(), postResolvable.getPostSite());
-    }
+    private final XmlMapper xmlMapper;
 
-    public void addFavorite(User user, PostResolvable postResolvable) {
-        PostEntity postEntity = postMapper.toPostEntity(postResolvable, user);
-        postRepository.save(postEntity);
-    }
+    private final ApplicationEventPublisher eventPublisher;
 
-    public void removeFavorite(User user, PostResolvable postResolvable) {
-        postRepository.delete(postMapper.toPostEntity(postResolvable, user));
-    }
-
-    public List<PostResolvableEntry> getFavorites(long userId) {
-        List<PostEntity> byUserId = postRepository.findByUserId(userId);
-
-        return postMapper.fromPostEntities(byUserId);
-    }
-
-    public Post resolve(PostResolvableEntry postResolvable) throws PostFetchException {
+    public Post resolve(PostResolvable postResolvable) throws PostFetchException {
         Post cachedPost = postCache.get(postResolvable);
 
         if (cachedPost != null) {
             return cachedPost;
         }
 
-        return postResolvable.getPostSite().getPostApi().fetchById(postResolvable.getPostId());
+        PostFetchOptions postFetchOptions = PostFetchOptions.builder()
+                .id(postResolvable.getPostId())
+                .postSite(postResolvable.getPostSite())
+                .build();
+
+        return fetchPost(postFetchOptions);
     }
 
+    public Post fetchPost(PostFetchOptions options) throws PostFetchException {
+        try {
+            PostApi postApi = options.getPostSite().getPostApi();
+            String url = postApi.getUrl(options);
+
+            String responseBody = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .onStatus(HttpStatus::isError, response -> Mono.just(new PostFetchException("Error fetching post")))
+                    .bodyToMono(String.class)
+                    .block();
+
+            PostQueryResult postQueryResult;
+
+            if (postApi.isJson()) {
+                postQueryResult = objectMapper.readValue(responseBody, postApi.getPostQueryResultType());
+            } else {
+                postQueryResult = xmlMapper.readValue(responseBody, postApi.getPostQueryResultType());
+            }
+
+            if (postQueryResult.getPosts().isEmpty()) {
+                throw new PostFetchException("Could not find posts");
+            }
+
+            Post post = postQueryResult.getPosts().get(0);
+
+            if (TagUtil.hasDisallowedTags(post.getTags())) {
+                throw new PostFetchException("Post contains disallowed tags");
+            }
+
+            return post;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public int fetchCount(PostFetchOptions options) throws PostFetchException {
+        try {
+            PostApi postApi = options.getPostSite().getPostApi();
+            String url = postApi.getUrl(options);
+
+            String responseBody = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .onStatus(HttpStatus::isError, response -> Mono.just(new PostFetchException("Error fetching posts")))
+                    .bodyToMono(String.class)
+                    .block();
+
+            CountResult countResult;
+            if (postApi.isJson()) {
+                countResult = objectMapper.readValue(responseBody, postApi.getCountsResultType());
+            } else {
+                countResult = xmlMapper.readValue(responseBody, postApi.getCountsResultType());
+            }
+            return countResult.getCount();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new PostFetchException("Error fetching count", e);
+        }
+    }
 }
