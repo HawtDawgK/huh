@@ -6,8 +6,8 @@ import org.springframework.context.ApplicationEvent;
 
 public final class HistoryEvent extends ApplicationEvent {
 
-    private final PostResolvableEntry newEntry;
-    private final TextChannel channel;
+    private final transient PostResolvableEntry newEntry;
+    private final transient TextChannel channel;
 
     public HistoryEvent(PostResolvableEntry newEntry, TextChannel channel) {
         super(new Object());
@@ -15,19 +15,12 @@ public final class HistoryEvent extends ApplicationEvent {
         this.channel = channel;
     }
 
-    public PostResolvableEntry newEntry() {
+    public PostResolvableEntry getNewEntry() {
         return newEntry;
     }
 
-    public TextChannel channel() {
+    public TextChannel getChannel() {
         return channel;
-    }
-
-    @Override
-    public String toString() {
-        return "HistoryEvent[" +
-                "newEntry=" + newEntry + ", " +
-                "channel=" + channel + ']';
     }
 
 }

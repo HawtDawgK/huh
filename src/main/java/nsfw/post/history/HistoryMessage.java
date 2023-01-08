@@ -1,7 +1,7 @@
 package nsfw.post.history;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import nsfw.post.PostMessage;
 import nsfw.post.PostResolvableEntry;
 import nsfw.post.api.PostFetchOptions;
@@ -9,7 +9,7 @@ import org.javacord.api.entity.channel.TextChannel;
 
 import java.util.List;
 
-@Log
+@Slf4j
 @RequiredArgsConstructor
 public class HistoryMessage extends PostMessage {
 
@@ -21,10 +21,9 @@ public class HistoryMessage extends PostMessage {
         return "Post history";
     }
 
-    public synchronized void onHistoryEvent(HistoryEvent event) {
-        if (textChannel.equals(event.channel())) {
-            log.info("Received history event");
-            posts.add(event.newEntry());
+    public void onHistoryEvent(HistoryEvent event) {
+        if (textChannel.equals(event.getChannel())) {
+            posts.add(event.getNewEntry());
         }
     }
 

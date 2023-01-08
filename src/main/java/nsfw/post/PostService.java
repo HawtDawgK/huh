@@ -6,12 +6,17 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import nsfw.post.api.*;
 import nsfw.post.cache.PostCache;
+import nsfw.post.history.HistoryEvent;
 import nsfw.util.TagUtil;
+import org.javacord.api.entity.channel.TextChannel;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,28 +32,12 @@ public class PostService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    public Post resolve(PostResolvable postResolvable) throws PostFetchException {
-        Post cachedPost = postCache.get(postResolvable);
-
-        if (cachedPost != null) {
-            return cachedPost;
-        }
-
-        PostFetchOptions postFetchOptions = PostFetchOptions.builder()
-                .id(postResolvable.getPostId())
-                .postSite(postResolvable.getPostSite())
-                .build();
-
-        return fetchPost(postFetchOptions);
-    }
-
-    public Post fetchPost(PostFetchOptions options) throws PostFetchException {
+    public Post fetchPost(TextChannel textChannel, PostFetchOptions options) throws PostFetchException {
         try {
             PostApi postApi = options.getPostSite().getPostApi();
-            String url = postApi.getUrl(options);
 
             String responseBody = webClient.get()
-                    .uri(url)
+                    .uri(postApi.getUrl(options))
                     .retrieve()
                     .onStatus(HttpStatus::isError, response -> Mono.just(new PostFetchException("Error fetching post")))
                     .bodyToMono(String.class)
@@ -63,15 +52,21 @@ public class PostService {
             }
 
             if (postQueryResult.getPosts().isEmpty()) {
-                throw new PostFetchException("Could not find posts");
+                throw new PostFetchException("Could not find any posts.");
             }
 
             Post post = postQueryResult.getPosts().get(0);
 
-            if (TagUtil.hasDisallowedTags(post.getTags())) {
-                throw new PostFetchException("Post contains disallowed tags");
+            List<String> disallowedTags = TagUtil.getDisallowedTags(post.getTags());
+            if (!disallowedTags.isEmpty()) {
+                throw new PostFetchException("Post contains disallowed tags: " + String.join(",", disallowedTags));
             }
 
+            PostResolvableEntry postResolvableEntry = new PostResolvableEntry(post.getId(), options.getPostSite(),
+                    Instant.now());
+            eventPublisher.publishEvent(new HistoryEvent(postResolvableEntry, textChannel));
+
+            postCache.put(post, postApi.getSite());
             return post;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

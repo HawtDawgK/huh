@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import nsfw.enums.PostSite;
 import nsfw.post.api.PostApi;
 import org.javacord.api.DiscordApi;
@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Service
-@Log
+@Slf4j
 @RequiredArgsConstructor
 public class AutocompleteService {
 

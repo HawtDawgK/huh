@@ -1,16 +1,21 @@
 package nsfw.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TagUtil {
 
-    private static final String[] disallowedTags = { "loli", "shota", "underage", "baby" };
+    private static final String[] disallowedTags = {"loli", "shota", "underage", "baby"};
 
-    public static boolean hasDisallowedTags(String tags) {
+    public static List<String> getDisallowedTags(String tags) {
+        List<String> disallowedTagsFound = new ArrayList<>();
+
         for (String disallowedTag : disallowedTags) {
             if (tags.contains(disallowedTag)) {
-                return true;
+                disallowedTagsFound.add(disallowedTag);
             }
         }
 
-        return false;
+        return disallowedTagsFound;
     }
 }

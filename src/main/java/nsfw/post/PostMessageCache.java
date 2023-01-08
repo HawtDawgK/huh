@@ -46,14 +46,18 @@ public class PostMessageCache {
 
     public void addPost(SlashCommandCreateEvent event, PostMessage postMessage) {
         try {
-            Post firstPost = postService.fetchPost(postMessage.getPostFetchOptions());
+            if (event.getInteraction().getChannel().isEmpty()) {
+                return;
+            }
+
+            Post firstPost = postService.fetchPost(event.getInteraction().getChannel().get(), postMessage.getPostFetchOptions());
             postMessage.setCurrentPost(firstPost);
             PostMessageable postMessageable = toPostMessageable(postMessage);
 
             Message message = event.getSlashCommandInteraction().createImmediateResponder()
                     .setContent(postMessageable.content())
                     .addEmbeds(postMessageable.embed())
-                    .addComponents(PostMessageButtons.PAGE_ROWS)
+                    .addComponents(PostMessageButtons.actionRows())
                     .respond().join()
                     .update().join();
 
@@ -63,15 +67,15 @@ public class PostMessageCache {
                     .setContent("")
                     .removeAllEmbeds()
                     .addEmbed(embedService.createErrorEmbed(e.getMessage()))
-                    .addComponents(PostMessageButtons.PAGE_ROWS)
+                    .addComponents(PostMessageButtons.actionRows())
                     .respond().join();
         }
     }
 
     public void handleInteraction(MessageComponentCreateEvent event) {
-        long id = event.getMessageComponentInteraction().getMessage().getId();
+        PostMessage postMessage = postMessageMap.get(event.getMessageComponentInteraction().getMessage().getId());
 
-        if (!postMessageMap.containsKey(id)) {
+        if (postMessage == null) {
             log.info("Received unknown interaction");
             return;
         }
@@ -79,7 +83,7 @@ public class PostMessageCache {
         String customId = event.getMessageComponentInteraction().getCustomId();
 
         if (customId.equals("add-favorite")) {
-            addFavorite(event);
+            addFavorite(postMessage, event);
             return;
         }
         if (customId.equals("delete-message")) {
@@ -87,11 +91,10 @@ public class PostMessageCache {
             return;
         }
         if (customId.equals("delete-favorite")) {
-            removeFavorite(event);
+            User reactingUser = event.getInteraction().getUser();
+            removeFavorite(reactingUser, postMessage, event);
             return;
         }
-
-        PostMessage postMessage = postMessageMap.get(id);
 
         switch (customId) {
             case "next-page" -> postMessage.nextPage();
@@ -104,15 +107,7 @@ public class PostMessageCache {
         updatePost(event);
     }
 
-    private void addFavorite(MessageComponentCreateEvent event) {
-        long id = event.getMessageComponentInteraction().getMessage().getId();
-
-        if (!postMessageMap.containsKey(id)) {
-            log.info("Added favorite for unknown interaction");
-            return;
-        }
-
-        PostMessage postMessage = postMessageMap.get(id);
+    private void addFavorite(PostMessage postMessage, MessageComponentCreateEvent event) {
         Post currentPost = postMessage.getCurrentPost();
 
         PostResolvable currentResolvable = currentPost.toPostResolvable(postMessage.getPostFetchOptions().getPostSite());
@@ -131,7 +126,7 @@ public class PostMessageCache {
     public void updatePost(MessageComponentCreateEvent edit) {
         long id = edit.getMessageComponentInteraction().getMessage().getId();
 
-        if (!postMessageMap.containsKey(id)) {
+        if (!postMessageMap.containsKey(id) || edit.getInteraction().getChannel().isEmpty()) {
             return;
         }
 
@@ -139,7 +134,7 @@ public class PostMessageCache {
 
         try {
             PostFetchOptions postFetchOptions = postMessage.getPostFetchOptions();
-            Post post = postService.fetchPost(postFetchOptions);
+            Post post = postService.fetchPost(edit.getInteraction().getChannel().get(), postFetchOptions);
             postMessage.setCurrentPost(post);
 
             PostMessageable postMessageable = toPostMessageable(postMessage);
@@ -148,14 +143,14 @@ public class PostMessageCache {
                     .setContent(postMessageable.content())
                     .removeAllEmbeds()
                     .addEmbed(postMessageable.embed())
-                    .addComponents(PostMessageButtons.PAGE_ROWS)
+                    .addComponents(PostMessageButtons.actionRows())
                     .update().join();
         } catch (PostFetchException e) {
             edit.getMessageComponentInteraction().createOriginalMessageUpdater()
                     .setContent("")
                     .removeAllEmbeds()
                     .addEmbed(embedService.createErrorEmbed(e.getMessage()))
-                    .addComponents(PostMessageButtons.PAGE_ROWS)
+                    .addComponents(PostMessageButtons.actionRows())
                     .update().join();
         }
     }
@@ -183,13 +178,6 @@ public class PostMessageCache {
         }
     }
 
-    public synchronized void onHistoryEvent(HistoryEvent historyEvent) {
-        postMessageMap.values().stream()
-                .filter(HistoryMessage.class::isInstance)
-                .map(HistoryMessage.class::cast)
-                .forEach(p -> p.onHistoryEvent(historyEvent));
-    }
-
     private PostMessageable toPostMessageable(PostMessage postMessage) {
         Post currentPost = postMessage.getCurrentPost();
 
@@ -202,16 +190,7 @@ public class PostMessageCache {
         return PostMessageable.fromPost(postEmbedOptions, embedService);
     }
 
-    private void removeFavorite(MessageComponentCreateEvent event) {
-        long id = event.getMessageComponentInteraction().getMessage().getId();
-
-        if (!postMessageMap.containsKey(id)) {
-            return;
-        }
-
-        PostMessage postMessage = postMessageMap.get(id);
-        User reactingUser = event.getInteraction().getUser();
-
+    private void removeFavorite(User reactingUser, PostMessage postMessage, MessageComponentCreateEvent event) {
         PostResolvable postResolvableEntry = postMessage.getCurrentPost()
                 .toPostResolvable(postMessage.getPostFetchOptions().getPostSite());
         boolean removed = favoritesService.removeFavorite(reactingUser, postResolvableEntry);
@@ -225,10 +204,18 @@ public class PostMessageCache {
     }
 
     @EventListener
-    public void onApplicationEvent(FavoriteEvent event) {
+    public void onApplicationEvent(FavoriteEvent favoriteEvent) {
         postMessageMap.values().stream()
                 .filter(FavoritesMessage.class::isInstance)
                 .map(FavoritesMessage.class::cast)
-                .forEach(p -> p.onFavoriteEvent(event));
+                .forEach(p -> p.onFavoriteEvent(favoriteEvent));
+    }
+
+    @EventListener
+    public void onApplicationEvent(HistoryEvent historyEvent) {
+        postMessageMap.values().stream()
+                .filter(HistoryMessage.class::isInstance)
+                .map(HistoryMessage.class::cast)
+                .forEach(p -> p.onHistoryEvent(historyEvent));
     }
 }

@@ -2,11 +2,11 @@ package nsfw.post.history;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.PostMessageCache;
 import nsfw.post.PostResolvable;
+import nsfw.post.PostResolvableEntry;
 import nsfw.util.LimitedSizeQueue;
 import org.javacord.api.entity.channel.TextChannel;
-import nsfw.post.PostResolvableEntry;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -19,11 +19,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostHistory {
 
-    private final PostMessageCache postMessageCache;
-
     private static final int MAX_LENGTH = 100;
 
     private final HashMap<TextChannel, List<PostResolvableEntry>> history = new HashMap<>();
+
+    @EventListener
+    public void onApplicationEvent(HistoryEvent historyEvent) {
+        List<PostResolvableEntry> postResolvableEntries = history.get(historyEvent.getChannel());
+
+        if (postResolvableEntries != null) {
+            postResolvableEntries.add(historyEvent.getNewEntry());
+        }
+    }
 
     public synchronized void addPost(TextChannel textChannel, PostResolvable postResolvable) {
         history.putIfAbsent(textChannel, new LimitedSizeQueue<>(MAX_LENGTH));
@@ -31,9 +38,6 @@ public class PostHistory {
         PostResolvableEntry postResolvableEntry = new PostResolvableEntry(postResolvable.getPostId(),
                 postResolvable.getPostSite(), Instant.now());
         history.get(textChannel).add(postResolvableEntry);
-
-        HistoryEvent historyEvent = new HistoryEvent(postResolvableEntry, textChannel);
-        postMessageCache.onHistoryEvent(historyEvent);
     }
 
     public List<PostResolvableEntry> getHistory(TextChannel textChannel) {

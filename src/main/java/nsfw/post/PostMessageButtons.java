@@ -7,7 +7,7 @@ import org.javacord.api.entity.message.component.Button;
 @UtilityClass
 public class PostMessageButtons {
 
-    public static final ActionRow[] PAGE_ROWS;
+    private static final ActionRow[] PAGE_ROWS;
 
     static {
         ActionRow row1 = ActionRow.of(Button.primary("next-page", "Next page"),
@@ -20,4 +20,7 @@ public class PostMessageButtons {
         PAGE_ROWS = new ActionRow[]{row1, row2};
     }
 
+    public static ActionRow[] actionRows() {
+        return PAGE_ROWS;
+    }
 }

@@ -22,6 +22,8 @@ public abstract class PostMessage {
 
     public abstract PostFetchOptions getPostFetchOptions();
 
+    public abstract String getTitle();
+
     void nextPage() {
         page = Math.floorMod(page + 1, getCount());
     }

@@ -16,6 +16,11 @@ public class PostApiMessage extends PostMessage {
     private final PostSite postSite;
 
     @Override
+    public String getTitle() {
+        return "";
+    }
+
+    @Override
     public PostFetchOptions getPostFetchOptions() {
         return PostFetchOptions.builder()
                 .page((long) getPage())
