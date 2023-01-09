@@ -24,8 +24,11 @@ public class FavoritesService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public boolean addFavorite(User user, PostResolvable postResolvable) {
-        PostEntity postEntity = postMapper.toPostEntity(postResolvable, user);
+        if (hasFavorite(user, postResolvable)) {
+            return false;
+        }
 
+        PostEntity postEntity = postMapper.toPostEntity(postResolvable, user);
         postRepository.save(postEntity);
 
         PostResolvableEntry newEntry = new PostResolvableEntry(postResolvable.getPostId(),
