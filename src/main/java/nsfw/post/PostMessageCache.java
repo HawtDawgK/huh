@@ -12,16 +12,18 @@ import nsfw.post.favorites.FavoritesService;
 import nsfw.post.history.HistoryEvent;
 import nsfw.post.history.HistoryMessage;
 import org.javacord.api.DiscordApi;
-import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageFlag;
+import org.javacord.api.entity.message.component.ActionRow;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.InteractionBase;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -37,77 +39,97 @@ public class PostMessageCache {
 
     private final PostService postService;
 
-    private static final Map<Long, PostMessage> postMessageMap = new ConcurrentHashMap<>();
+    private static final Map<String, Action> postMessageMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void postConstruct() {
         discordApi.addMessageComponentCreateListener(this::handleInteraction);
     }
 
+    public record Action(PostMessage postMessage, ActionType actionType, ActionRow[] actionRows) {
+    }
+
+    public enum ActionType {
+        NEXT_PAGE,
+        RANDOM_PAGE,
+        PREVIOUS_PAGE,
+        ADD_FAVORITE,
+        DELETE_MESSAGE,
+        DELETE_FAVORITE
+    }
+
     public void addPost(SlashCommandCreateEvent event, PostMessage postMessage) {
-        try {
-            if (event.getInteraction().getChannel().isEmpty()) {
-                return;
-            }
+        String nextPageId = UUID.randomUUID().toString();
+        String randomPageId = UUID.randomUUID().toString();
+        String previousPageId = UUID.randomUUID().toString();
+        String addFavoriteId = UUID.randomUUID().toString();
+        String deleteMessageId = UUID.randomUUID().toString();
+        String deleteFavoriteId = UUID.randomUUID().toString();
 
-            Post firstPost = postService.fetchPost(event.getInteraction().getChannel().get(), postMessage.getPostFetchOptions());
-            postMessage.setCurrentPost(firstPost);
-            PostMessageable postMessageable = toPostMessageable(postMessage);
+        ActionRow[] actionRows = PostMessageButtons.actionRows(nextPageId, randomPageId, previousPageId,
+                addFavoriteId, deleteMessageId, deleteFavoriteId);
 
-            Message message = event.getSlashCommandInteraction().createImmediateResponder()
-                    .setContent(postMessageable.content())
-                    .addEmbeds(postMessageable.embed())
-                    .addComponents(PostMessageButtons.actionRows())
-                    .respond().join()
-                    .update().join();
-
-            postMessageMap.put(message.getId(), postMessage);
-        } catch (PostFetchException e) {
-            event.getSlashCommandInteraction().createImmediateResponder()
-                    .setContent("")
-                    .removeAllEmbeds()
-                    .addEmbed(embedService.createErrorEmbed(e.getMessage()))
-                    .addComponents(PostMessageButtons.actionRows())
-                    .respond().join();
+        if (event.getInteraction().getChannel().isEmpty()) {
+            return;
         }
+
+        postMessageMap.put(nextPageId, new Action(postMessage, ActionType.NEXT_PAGE, actionRows));
+        postMessageMap.put(randomPageId, new Action(postMessage, ActionType.RANDOM_PAGE, actionRows));
+        postMessageMap.put(previousPageId, new Action(postMessage, ActionType.PREVIOUS_PAGE, actionRows));
+        postMessageMap.put(addFavoriteId, new Action(postMessage, ActionType.ADD_FAVORITE, actionRows));
+        postMessageMap.put(deleteMessageId, new Action(postMessage, ActionType.DELETE_MESSAGE, actionRows));
+        postMessageMap.put(deleteFavoriteId, new Action(postMessage, ActionType.DELETE_FAVORITE, actionRows));
+
+        updatePost(new Action(postMessage, ActionType.NEXT_PAGE, actionRows), event.getInteraction());
+    }
+
+    private void nextPage(MessageComponentCreateEvent event) {
+        String customId = event.getMessageComponentInteraction().getCustomId();
+        Action action = postMessageMap.get(customId);
+
+        action.postMessage.nextPage();
+        updatePost(action, event.getInteraction());
+    }
+
+    public void previousPage(MessageComponentCreateEvent event) {
+        String customId = event.getMessageComponentInteraction().getCustomId();
+        Action action = postMessageMap.get(customId);
+
+        action.postMessage.previousPage();
+        updatePost(action, event.getInteraction());
+    }
+
+    public void randomPage(MessageComponentCreateEvent event) {
+        String customId = event.getMessageComponentInteraction().getCustomId();
+        Action action = postMessageMap.get(customId);
+        action.postMessage.randomPage();
+
+        updatePost(action, event.getInteraction());
     }
 
     public void handleInteraction(MessageComponentCreateEvent event) {
-        PostMessage postMessage = postMessageMap.get(event.getMessageComponentInteraction().getMessage().getId());
-
-        if (postMessage == null) {
-            log.info("Received unknown interaction");
-            return;
-        }
-
         String customId = event.getMessageComponentInteraction().getCustomId();
 
-        if (customId.equals("add-favorite")) {
-            addFavorite(postMessage, event);
+        if (!postMessageMap.containsKey(customId)) {
+            log.error("Received unknown interaction " + customId);
             return;
         }
-        if (customId.equals("delete-message")) {
-            deleteMessage(event);
-            return;
-        }
-        if (customId.equals("delete-favorite")) {
-            User reactingUser = event.getInteraction().getUser();
-            removeFavorite(reactingUser, postMessage, event);
-            return;
-        }
+        Action action = postMessageMap.get(customId);
 
-        switch (customId) {
-            case "next-page" -> postMessage.nextPage();
-            case "random-page" -> postMessage.randomPage();
-            case "previous-page" -> postMessage.previousPage();
-            default ->
-                    log.warn("Received invalid interaction id " + event.getMessageComponentInteraction().getCustomId());
+        switch (action.actionType()) {
+            case NEXT_PAGE -> nextPage(event);
+            case RANDOM_PAGE -> randomPage(event);
+            case PREVIOUS_PAGE -> previousPage(event);
+            case ADD_FAVORITE -> addFavorite(event);
+            case DELETE_FAVORITE -> removeFavorite(event);
+            case DELETE_MESSAGE -> deleteMessage(event);
         }
-
-        updatePost(event);
     }
 
-    private void addFavorite(PostMessage postMessage, MessageComponentCreateEvent event) {
+    private void addFavorite(MessageComponentCreateEvent event) {
+        PostMessage postMessage = postMessageMap.get(event.getMessageComponentInteraction().getCustomId())
+                .postMessage();
+
         Post currentPost = postMessage.getCurrentPost();
 
         PostResolvable currentResolvable = currentPost.toPostResolvable(postMessage.getPostFetchOptions().getPostSite());
@@ -123,55 +145,46 @@ public class PostMessageCache {
                 .respond().join();
     }
 
-    public void updatePost(MessageComponentCreateEvent edit) {
-        long id = edit.getMessageComponentInteraction().getMessage().getId();
-
-        if (!postMessageMap.containsKey(id) || edit.getInteraction().getChannel().isEmpty()) {
-            return;
-        }
-
-        PostMessage postMessage = postMessageMap.get(id);
+    public void updatePost(Action action, InteractionBase interactionBase) {
+        PostMessage postMessage = action.postMessage();
 
         try {
             PostFetchOptions postFetchOptions = postMessage.getPostFetchOptions();
-            Post post = postService.fetchPost(edit.getInteraction().getChannel().get(), postFetchOptions);
+            Post post = postService.fetchPost(interactionBase.getChannel().get(), postFetchOptions);
             postMessage.setCurrentPost(post);
 
             PostMessageable postMessageable = toPostMessageable(postMessage);
 
-            edit.getMessageComponentInteraction().createOriginalMessageUpdater()
+            interactionBase.createImmediateResponder()
                     .setContent(postMessageable.content())
                     .removeAllEmbeds()
                     .addEmbed(postMessageable.embed())
-                    .addComponents(PostMessageButtons.actionRows())
-                    .update().join();
+                    .addComponents(action.actionRows())
+                    .respond().join();
         } catch (PostFetchException e) {
-            edit.getMessageComponentInteraction().createOriginalMessageUpdater()
+            interactionBase.createImmediateResponder()
                     .setContent("")
                     .removeAllEmbeds()
                     .addEmbed(embedService.createErrorEmbed(e.getMessage()))
-                    .addComponents(PostMessageButtons.actionRows())
-                    .update().join();
+                    .addComponents(action.actionRows())
+                    .respond().join();
         }
     }
 
-    private void deleteMessage(MessageComponentCreateEvent messageComponentCreateEvent) {
-        long id = messageComponentCreateEvent.getMessageComponentInteraction().getMessage().getId();
+    private void deleteMessage(MessageComponentCreateEvent event) {
+        String customId = event.getMessageComponentInteraction().getCustomId();
 
-        if (!postMessageMap.containsKey(id)) {
-            return;
-        }
-
-        User reactingUser = messageComponentCreateEvent.getInteraction().getUser();
-        User author = messageComponentCreateEvent.getInteraction().getUser();
+        User reactingUser = event.getInteraction().getUser();
+        User author = event.getInteraction().getUser();
 
         // Only author can delete the message
         if (reactingUser.equals(author)) {
-            postMessageMap.remove(id);
-            messageComponentCreateEvent.getMessageComponentInteraction().getMessage().delete().join();
-            postMessageMap.remove(id);
+            event.getMessageComponentInteraction().getMessage().delete().join();
+            postMessageMap.keySet().stream()
+                    .filter(key -> key.equals(customId))
+                    .forEach(postMessageMap::remove);
         } else {
-            messageComponentCreateEvent.getMessageComponentInteraction()
+            event.getMessageComponentInteraction()
                     .createImmediateResponder()
                     .setContent("Only the author can delete this message")
                     .respond().join();
@@ -190,10 +203,14 @@ public class PostMessageCache {
         return PostMessageable.fromPost(postEmbedOptions, embedService);
     }
 
-    private void removeFavorite(User reactingUser, PostMessage postMessage, MessageComponentCreateEvent event) {
-        PostResolvable postResolvableEntry = postMessage.getCurrentPost()
+    private void removeFavorite(MessageComponentCreateEvent event) {
+        PostMessage postMessage = postMessageMap.get(event.getMessageComponentInteraction().getCustomId()).postMessage();
+
+        User reactingUser = event.getInteraction().getUser();
+
+        PostResolvable postResolvable = postMessage.getCurrentPost()
                 .toPostResolvable(postMessage.getPostFetchOptions().getPostSite());
-        boolean removed = favoritesService.removeFavorite(reactingUser, postResolvableEntry);
+        boolean removed = favoritesService.removeFavorite(reactingUser, postResolvable);
 
         String message = removed ? "Successfully removed favorite." : "Not stored as favorite.";
 
@@ -206,7 +223,7 @@ public class PostMessageCache {
     @EventListener
     public void onApplicationEvent(FavoriteEvent favoriteEvent) {
         postMessageMap.values().stream()
-                .filter(FavoritesMessage.class::isInstance)
+                .filter(p -> p.postMessage() instanceof FavoritesMessage)
                 .map(FavoritesMessage.class::cast)
                 .forEach(p -> p.onFavoriteEvent(favoriteEvent));
     }
@@ -214,7 +231,7 @@ public class PostMessageCache {
     @EventListener
     public void onApplicationEvent(HistoryEvent historyEvent) {
         postMessageMap.values().stream()
-                .filter(HistoryMessage.class::isInstance)
+                .filter(p -> p.postMessage() instanceof HistoryMessage)
                 .map(HistoryMessage.class::cast)
                 .forEach(p -> p.onHistoryEvent(historyEvent));
     }

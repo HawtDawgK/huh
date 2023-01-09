@@ -19,4 +19,9 @@ public class DanbooruAutocompleteResult implements AutocompleteResult {
     public String getValue() {
         return name;
     }
+
+    @Override
+    public boolean isJson() {
+        return true;
+    }
 }

@@ -21,9 +21,4 @@ public class GelbooruApi extends GenericPostApi {
         return getBaseUrl() + "index.php?page=autocomplete2&term=" + tags + "&type=tag_query&limit=10";
     }
 
-    @Override
-    public String getUrl(PostFetchOptions options) {
-        return null;
-    }
-
 }

@@ -16,8 +16,4 @@ public class TbibApi extends GenericPostApi {
         return PostSite.TBIB;
     }
 
-    @Override
-    public String getUrl(PostFetchOptions options) {
-        return null;
-    }
 }

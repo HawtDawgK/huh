@@ -11,4 +11,8 @@ public class AutocompleteResultImpl implements AutocompleteResult {
 
     private String value;
 
+    @Override
+    public boolean isJson() {
+        return true;
+    }
 }

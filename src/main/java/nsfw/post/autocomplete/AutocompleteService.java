@@ -67,7 +67,7 @@ public class AutocompleteService {
                     .toList();
             event.getAutocompleteInteraction().respondWithChoices(choices).join();
         } catch (AutocompleteException | JsonProcessingException e) {
-            e.printStackTrace();
+            log.error("Error during autocomplete ", e);
             event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList()).join();
         }
     }

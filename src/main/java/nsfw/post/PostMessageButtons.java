@@ -7,20 +7,15 @@ import org.javacord.api.entity.message.component.Button;
 @UtilityClass
 public class PostMessageButtons {
 
-    private static final ActionRow[] PAGE_ROWS;
+    public static ActionRow[] actionRows(String nextPageId, String randomPageId, String previousPageId,
+            String addFavoriteId, String deleteMessageId, String deleteFavoriteId) {
+        ActionRow row1 = ActionRow.of(Button.primary(nextPageId, "Next page"),
+                Button.primary(randomPageId, "Random page"),
+                Button.primary(previousPageId, "Previous page"));
+        ActionRow row2 = ActionRow.of(Button.success(addFavoriteId, "Add favorite"),
+                Button.danger(deleteMessageId, "Delete message"),
+                Button.danger(deleteFavoriteId, "Remove favorite"));
 
-    static {
-        ActionRow row1 = ActionRow.of(Button.primary("next-page", "Next page"),
-                Button.primary("random-page", "Random page"),
-                Button.primary("previous-page", "Previous page"));
-        ActionRow row2 = ActionRow.of(Button.success("add-favorite", "Add favorite"),
-                Button.danger("delete-message", "Delete message"),
-                Button.danger("delete-favorite", "Remove favorite"));
-
-        PAGE_ROWS = new ActionRow[]{row1, row2};
-    }
-
-    public static ActionRow[] actionRows() {
-        return PAGE_ROWS;
+        return new ActionRow[]{row1, row2};
     }
 }

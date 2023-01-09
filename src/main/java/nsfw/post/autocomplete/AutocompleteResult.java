@@ -6,4 +6,6 @@ public interface AutocompleteResult {
     String getLabel();
 
     String getValue();
+
+    boolean isJson();
 }

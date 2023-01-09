@@ -16,8 +16,4 @@ public class XbooruApi extends GenericPostApi {
         return PostSite.XBOORU;
     }
 
-    @Override
-    public String getUrl(PostFetchOptions options) {
-        return null;
-    }
 }
