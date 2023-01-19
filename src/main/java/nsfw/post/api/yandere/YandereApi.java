@@ -3,7 +3,6 @@ package nsfw.post.api.yandere;
 import nsfw.enums.PostSite;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.api.generic.GenericPostApi;
-import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 public class YandereApi extends GenericPostApi  {

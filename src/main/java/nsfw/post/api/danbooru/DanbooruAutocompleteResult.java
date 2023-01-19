@@ -17,7 +17,7 @@ public class DanbooruAutocompleteResult implements AutocompleteResult {
 
     @Override
     public String getValue() {
-        return name;
+        return getLabel();
     }
 
     @Override

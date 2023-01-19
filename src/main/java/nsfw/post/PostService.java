@@ -11,6 +11,7 @@ import nsfw.util.TagUtil;
 import org.javacord.api.entity.channel.TextChannel;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -32,7 +33,7 @@ public class PostService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    public Post fetchPost(TextChannel textChannel, PostFetchOptions options) throws PostFetchException {
+    public Post fetchPost(@Nullable TextChannel textChannel, PostFetchOptions options) throws PostFetchException {
         try {
             PostApi postApi = options.getPostSite().getPostApi();
 
@@ -64,7 +65,10 @@ public class PostService {
 
             PostResolvableEntry postResolvableEntry = new PostResolvableEntry(post.getId(), options.getPostSite(),
                     Instant.now());
-            eventPublisher.publishEvent(new HistoryEvent(postResolvableEntry, textChannel));
+
+            if (textChannel != null) {
+                eventPublisher.publishEvent(new HistoryEvent(postResolvableEntry, textChannel));
+            }
 
             postCache.put(post, postApi.getSite());
             return post;

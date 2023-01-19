@@ -1,7 +1,6 @@
 package nsfw.post.api.xbooru;
 
 import nsfw.enums.PostSite;
-import nsfw.post.api.PostFetchOptions;
 import nsfw.post.api.generic.GenericPostApi;
 
 public class XbooruApi extends GenericPostApi {

@@ -6,11 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import nsfw.post.api.PostFetchOptions;
 
 import java.util.Random;
+import java.util.UUID;
 
 @Slf4j
 @Getter
 @Setter
 public abstract class PostMessage {
+
+    private String uuid = UUID.randomUUID().toString();
 
     private Post currentPost;
 
