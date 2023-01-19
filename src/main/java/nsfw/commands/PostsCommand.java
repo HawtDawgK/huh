@@ -24,6 +24,7 @@ public class PostsCommand implements Command {
                 .addOption(new SlashCommandOptionBuilder()
                         .setName("site")
                         .setDescription("Site to search posts for")
+                        .setRequired(true)
                         .setType(SlashCommandOptionType.STRING)
                         .setChoices(Arrays.stream(PostSite.values()).map(PostSite::toSlashCommandOptionChoice).toList())
                         .build())

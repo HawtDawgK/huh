@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.embed.EmbedService;
 import nsfw.embed.PostEmbedOptions;
-import nsfw.post.api.PostFetchException;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.favorites.FavoriteEvent;
 import nsfw.post.favorites.FavoritesMessage;
@@ -14,10 +13,12 @@ import nsfw.post.history.HistoryMessage;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.component.ActionRow;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.InteractionBase;
+import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -179,40 +180,32 @@ public class PostMessageCache {
     public void updatePost(DiscordReactionData discordReactionData, InteractionBase interactionBase) {
         PostMessage postMessage = discordReactionData.postMessage();
 
-        try {
-            PostFetchOptions postFetchOptions = postMessage.getPostFetchOptions();
-            Post post = postService.fetchPost(interactionBase.getChannel().orElse(null), postFetchOptions);
-            postMessage.setCurrentPost(post);
-
-            PostMessageable postMessageable = toPostMessageable(postMessage);
-
-            interactionBase.createImmediateResponder()
-                    .setContent(postMessageable.content())
-                    .removeAllEmbeds()
-                    .addEmbed(postMessageable.embed())
-                    .addComponents(discordReactionData.actionRows())
-                    .respond().join();
-        } catch (PostFetchException e) {
-            interactionBase.createImmediateResponder()
-                    .setContent(e.getMessage())
-                    .removeAllEmbeds()
-                    .addEmbed(embedService.createErrorEmbed(e.getMessage()))
-                    .addComponents(discordReactionData.actionRows())
-                    .respond().join();
-        }
-    }
-
-    private PostMessageable toPostMessageable(PostMessage postMessage) {
-        Post currentPost = postMessage.getCurrentPost();
+        PostFetchOptions postFetchOptions = postMessage.getPostFetchOptions();
+        PostFetchResult postFetchResult = postService.fetchPost(interactionBase.getChannel().orElse(null), postFetchOptions);
 
         PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
-                .post(currentPost)
+                .post(postMessage.getCurrentPost())
                 .title(postMessage.getTitle())
                 .page(postMessage.getPage())
                 .count(postMessage.getCount())
+                .post(postFetchResult.post())
                 .build();
 
-        return PostMessageable.fromPost(postEmbedOptions, embedService);
+        EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
+        PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
+
+        InteractionImmediateResponseBuilder immediateResponder = interactionBase.createImmediateResponder();
+        immediateResponder.removeAllEmbeds();
+        immediateResponder.addComponents(discordReactionData.actionRows());
+        immediateResponder.setContent(postMessageable.content());
+
+        if (postFetchResult.isError()) {
+            immediateResponder.addEmbed(postMessageable.embed());
+        } else {
+            immediateResponder.addEmbed(embedService.createPostEmbed(postEmbedOptions));
+        }
+
+        immediateResponder.respond().join();
     }
 
     @EventListener

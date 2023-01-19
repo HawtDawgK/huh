@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import nsfw.post.api.PostFetchOptions;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
-import nsfw.post.api.PostFetchException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -28,7 +27,7 @@ public class PostMessageFactory {
 
     private final PostMessageCache postMessageCache;
 
-    public void createPost(SlashCommandCreateEvent event, String tags, PostSite postSite) throws PostFetchException {
+    public void createPost(SlashCommandCreateEvent event, String tags, PostSite postSite) {
         PostFetchOptions postFetchOptions = PostFetchOptions.builder()
                 .postSite(postSite)
                 .tags(tags)

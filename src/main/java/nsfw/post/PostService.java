@@ -11,6 +11,7 @@ import nsfw.util.TagUtil;
 import org.javacord.api.entity.channel.TextChannel;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -33,34 +34,35 @@ public class PostService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    public Post fetchPost(@Nullable TextChannel textChannel, PostFetchOptions options) throws PostFetchException {
+    public PostFetchResult fetchPost(@Nullable TextChannel textChannel, PostFetchOptions options) {
         try {
             PostApi postApi = options.getPostSite().getPostApi();
 
-            String responseBody = webClient.get()
-                    .uri(postApi.getUrl(options))
-                    .retrieve()
-                    .onStatus(HttpStatus::isError, response -> Mono.just(new PostFetchException("Error fetching post")))
-                    .bodyToMono(String.class)
-                    .block();
+            ResponseEntity<String> responseEntity = webClient.get().uri(postApi.getUrl(options))
+                    .retrieve().toEntity(String.class).block();
+
+            if (responseEntity == null || responseEntity.getStatusCode().isError()) {
+                return new PostFetchResult(null, true, "Error fetching post");
+            }
 
             PostQueryResult postQueryResult;
 
             if (postApi.isJson()) {
-                postQueryResult = objectMapper.readValue(responseBody, postApi.getPostQueryResultType());
+                postQueryResult = objectMapper.readValue(responseEntity.getBody(), postApi.getPostQueryResultType());
             } else {
-                postQueryResult = xmlMapper.readValue(responseBody, postApi.getPostQueryResultType());
+                postQueryResult = xmlMapper.readValue(responseEntity.getBody(), postApi.getPostQueryResultType());
             }
 
             if (postQueryResult.getPosts().isEmpty()) {
-                throw new PostFetchException("Could not find any posts.");
+                return new PostFetchResult(null, true, "Could not find any posts.");
             }
 
             Post post = postQueryResult.getPosts().get(0);
 
             List<String> disallowedTags = TagUtil.getDisallowedTags(post.getTags());
             if (!disallowedTags.isEmpty()) {
-                throw new PostFetchException("Post contains disallowed tags: " + String.join(",", disallowedTags));
+                String errorMessage = "Post contains disallowed tags: " + String.join(",", disallowedTags);
+                return new PostFetchResult(null, true, errorMessage);
             }
 
             PostResolvableEntry postResolvableEntry = new PostResolvableEntry(post.getId(), options.getPostSite(),
@@ -71,34 +73,34 @@ public class PostService {
             }
 
             postCache.put(post, postApi.getSite());
-            return post;
+            return new PostFetchResult(post, false, null);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public int fetchCount(PostFetchOptions options) throws PostFetchException {
+    public int fetchCount(PostFetchOptions options) {
         try {
             PostApi postApi = options.getPostSite().getPostApi();
             String url = postApi.getUrl(options);
 
-            String responseBody = webClient.get()
-                    .uri(url)
-                    .retrieve()
-                    .onStatus(HttpStatus::isError, response -> Mono.just(new PostFetchException("Error fetching posts")))
-                    .bodyToMono(String.class)
-                    .block();
+            ResponseEntity<String> responseEntity = webClient.get().uri(url)
+                    .retrieve().toEntity(String.class).block();
+
+            if (responseEntity == null || responseEntity.getStatusCode().isError()) {
+                return 0;
+            }
 
             CountResult countResult;
             if (postApi.isJson()) {
-                countResult = objectMapper.readValue(responseBody, postApi.getCountsResultType());
+                countResult = objectMapper.readValue(responseEntity.getBody(), postApi.getCountsResultType());
             } else {
-                countResult = xmlMapper.readValue(responseBody, postApi.getCountsResultType());
+                countResult = xmlMapper.readValue(responseEntity.getBody(), postApi.getCountsResultType());
             }
             return countResult.getCount();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            throw new PostFetchException("Error fetching count", e);
+            return 0;
         }
     }
 }

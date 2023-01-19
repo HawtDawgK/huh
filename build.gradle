@@ -33,7 +33,7 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok:1.18.24'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
 
-    implementation 'mysql:mysql-connector-java:8.0.30'
+    implementation 'org.postgresql:postgresql:42.5.1'
 }
 
 test {

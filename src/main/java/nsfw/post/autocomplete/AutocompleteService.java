@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.enums.PostSite;
-import nsfw.post.api.PostApi;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.event.interaction.AutocompleteCreateEvent;
 import org.javacord.api.interaction.AutocompleteInteraction;
@@ -49,16 +48,14 @@ public class AutocompleteService {
                     .flatMap(SlashCommandInteractionOption::getStringValue)
                     .orElse("");
 
-            PostApi postApi = postSite.getPostApi();
-
             String responseBody = webClient.get()
-                    .uri(postApi.getAutocompleteUrl(tags))
+                    .uri(postSite.getPostApi().getAutocompleteUrl(tags))
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
 
             CollectionLikeType collectionLikeType = TypeFactory.defaultInstance()
-                    .constructCollectionLikeType(List.class, postApi.getAutocompleteResultType());
+                    .constructCollectionLikeType(List.class, postSite.getPostApi().getAutocompleteResultType());
 
             List<AutocompleteResult> autocompleteResults = objectMapper.readValue(responseBody, collectionLikeType);
 
