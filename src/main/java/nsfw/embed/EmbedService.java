@@ -22,16 +22,10 @@ public class EmbedService {
 
         embedBuilder.setTitle(options.getTitle());
         embedBuilder.setDescription(options.getDescription());
-
-        if (options.getEntry() != null) {
-            embedBuilder.setTimestamp(options.getEntry().getStoredAt());
-        } else {
-            embedBuilder.setTimestamp(options.getPost().getCreatedAt().toInstant());
-        }
-
+        embedBuilder.setTimestamp(options.getPost().getCreatedAt().toInstant());
         embedBuilder.setImage(options.getPost().getFileUrl());
 
-        String footer = String.format("Page %d of %d \u2022 Score: %d",
+        String footer = String.format("Page %d of %d • Score: %d",
                 options.getPage() + 1, options.getCount(), options.getPost().getScore());
         embedBuilder.setFooter(footer);
 

@@ -4,20 +4,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
-import nsfw.post.api.*;
+import nsfw.db.PostEntity;
+import nsfw.post.api.CountResult;
+import nsfw.post.api.PostApi;
+import nsfw.post.api.PostFetchOptions;
+import nsfw.post.api.PostQueryResult;
 import nsfw.post.cache.PostCache;
 import nsfw.post.history.HistoryEvent;
 import nsfw.util.TagUtil;
 import org.javacord.api.entity.channel.TextChannel;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -65,14 +66,17 @@ public class PostService {
                 return new PostFetchResult(null, true, errorMessage);
             }
 
-            PostResolvableEntry postResolvableEntry = new PostResolvableEntry(post.getId(), options.getPostSite(),
-                    Instant.now());
+            PostEntity postEntityKey = new PostEntity();
+            postEntityKey.setSite(post.getPostSite());
+            postEntityKey.setPostId(post.getId());
 
             if (textChannel != null) {
-                eventPublisher.publishEvent(new HistoryEvent(postResolvableEntry, textChannel));
+                eventPublisher.publishEvent(new HistoryEvent(postEntityKey, textChannel));
             }
 
-            postCache.put(post, postApi.getSite());
+            post.setPostSite(options.getPostSite());
+
+            postCache.put(post);
             return new PostFetchResult(post, false, null);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

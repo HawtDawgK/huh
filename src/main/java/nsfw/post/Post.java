@@ -7,10 +7,6 @@ import java.util.Date;
 
 public interface Post {
 
-    default PostResolvable toPostResolvable(PostSite postSite) {
-        return new PostResolvable(getId(), postSite);
-    }
-
     long getId();
 
     long getScore();
@@ -24,6 +20,10 @@ public interface Post {
     String getRating();
 
     Date getCreatedAt();
+
+    PostSite getPostSite();
+
+    void setPostSite(PostSite postSite);
 
     default boolean isVideo() {
         String[] splitUrl = getFileUrl().split("\\.");

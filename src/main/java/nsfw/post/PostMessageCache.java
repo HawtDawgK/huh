@@ -123,10 +123,9 @@ public class PostMessageCache {
 
         Post currentPost = postMessage.getCurrentPost();
 
-        PostResolvable currentResolvable = currentPost.toPostResolvable(postMessage.getPostFetchOptions().getPostSite());
         User user = event.getInteraction().getUser();
 
-        boolean added = favoritesService.addFavorite(user, currentResolvable);
+        boolean added = favoritesService.addFavorite(user, currentPost);
         String message = added ? "Successfully stored favorite." : "Already stored as favorite.";
 
         event.getInteraction()
@@ -141,9 +140,7 @@ public class PostMessageCache {
 
         User reactingUser = event.getInteraction().getUser();
 
-        PostResolvable postResolvable = postMessage.getCurrentPost()
-                .toPostResolvable(postMessage.getPostFetchOptions().getPostSite());
-        boolean removed = favoritesService.removeFavorite(reactingUser, postResolvable);
+        boolean removed = favoritesService.removeFavorite(reactingUser, postMessage.getCurrentPost());
 
         String message = removed ? "Successfully removed favorite." : "Not stored as favorite.";
 
@@ -202,6 +199,7 @@ public class PostMessageCache {
         if (postFetchResult.isError()) {
             immediateResponder.addEmbed(postMessageable.embed());
         } else {
+            postMessage.setCurrentPost(postFetchResult.post());
             immediateResponder.addEmbed(embedService.createPostEmbed(postEmbedOptions));
         }
 

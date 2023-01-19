@@ -1,10 +1,9 @@
 package nsfw.post.cache;
 
-import nsfw.enums.PostSite;
+import nsfw.db.PostEntity;
 import nsfw.post.Post;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
-import nsfw.post.PostResolvable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,13 +11,22 @@ import java.util.Map;
 @Component
 public class PostCache {
 
-    private static final Map<PostResolvable, Post> POST_CACHE = new HashMap<>();
+    private static final Map<PostEntity, Post> POST_CACHE = new HashMap<>();
 
-    public void put(Post post, PostSite postSite) {
-        POST_CACHE.put(new PostResolvable(post.getId(), postSite), post);
+    public void put(Post post) {
+        PostEntity postEntity = new PostEntity();
+        postEntity.setPostId(post.getId());
+        postEntity.setSite(post.getPostSite());
+
+        POST_CACHE.put(postEntity, post);
     }
 
-    public @Nullable Post get(PostResolvable postResolvable) {
-        return POST_CACHE.get(postResolvable);
+    /**
+     * TODO: Use this in postService
+     * @param postEntityKey
+     * @return
+     */
+    public @Nullable Post get(PostEntity postEntityKey) {
+        return POST_CACHE.get(postEntityKey);
     }
 }

@@ -33,6 +33,6 @@ public class GenericPost implements Post {
     @JsonDeserialize(using = CustomDateDeserializer.class)
     private Date createdAt;
 
-    private PostSite site;
+    private PostSite postSite;
 
 }

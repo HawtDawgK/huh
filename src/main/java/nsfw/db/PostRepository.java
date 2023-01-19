@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<PostEntity, Long> {
 
-    boolean existsByUserIdAndPostIdAndSiteName(long userId, long postId, PostSite siteName);
+    boolean existsByUserIdAndPostIdAndSite(long userId, long postId, PostSite site);
 
     List<PostEntity> findByUserId(long userId);
 

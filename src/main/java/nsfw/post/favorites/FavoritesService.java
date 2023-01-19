@@ -3,14 +3,11 @@ package nsfw.post.favorites;
 import lombok.RequiredArgsConstructor;
 import nsfw.db.PostEntity;
 import nsfw.db.PostRepository;
-import nsfw.post.PostMapper;
-import nsfw.post.PostResolvable;
-import nsfw.post.PostResolvableEntry;
+import nsfw.post.Post;
 import org.javacord.api.entity.user.User;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -19,45 +16,47 @@ public class FavoritesService {
 
     private final PostRepository postRepository;
 
-    private final PostMapper postMapper;
-
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public boolean addFavorite(User user, PostResolvable postResolvable) {
-        if (hasFavorite(user, postResolvable)) {
+    public boolean addFavorite(User user, Post post) {
+        if (hasFavorite(user, post)) {
             return false;
         }
 
-        PostEntity postEntity = postMapper.toPostEntity(postResolvable, user);
+        PostEntity postEntity = new PostEntity();
+        postEntity.setUserId(user.getId());
+        postEntity.setPostId(post.getId());
+        postEntity.setSite(post.getPostSite());
+
         postRepository.save(postEntity);
 
-        PostResolvableEntry newEntry = new PostResolvableEntry(postResolvable.getPostId(),
-                postResolvable.getPostSite(), Instant.now());
-        applicationEventPublisher.publishEvent(new FavoriteEvent(user, newEntry, FavoriteEventType.ADDED));
+        applicationEventPublisher.publishEvent(new FavoriteEvent(user, postEntity, FavoriteEventType.ADDED));
 
         return true;
     }
 
-    public boolean removeFavorite(User user, PostResolvable postResolvable) {
-        if (!hasFavorite(user, postResolvable)) {
+    public boolean removeFavorite(User user, Post post) {
+        if (!hasFavorite(user, post)) {
             return false;
         }
 
-        postRepository.delete(postMapper.toPostEntity(postResolvable, user));
+        PostEntity postEntity = new PostEntity();
+        postEntity.setUserId(user.getId());
+        postEntity.setPostId(post.getId());
+        postEntity.setSite(post.getPostSite());
 
-        PostResolvableEntry postResolvableEntry = PostResolvableEntry.fromPostResolvable(postResolvable);
+        postRepository.delete(postEntity);
 
-        applicationEventPublisher.publishEvent(new FavoriteEvent(user, postResolvableEntry, FavoriteEventType.REMOVED));
+        applicationEventPublisher.publishEvent(new FavoriteEvent(user, postEntity, FavoriteEventType.REMOVED));
         return true;
     }
 
-    public List<PostResolvableEntry> getFavorites(long userId) {
-        List<PostEntity> byUserId = postRepository.findByUserId(userId);
-        return postMapper.fromPostEntities(byUserId);
+    public List<PostEntity> getFavorites(long userId) {
+        return postRepository.findByUserId(userId);
     }
 
-    private boolean hasFavorite(User user, PostResolvable postResolvable) {
-        return postRepository.existsByUserIdAndPostIdAndSiteName(user.getId(),
-                postResolvable.getPostId(), postResolvable.getPostSite());
+    private boolean hasFavorite(User user, Post post) {
+        return postRepository.existsByUserIdAndPostIdAndSite(user.getId(),
+                post.getId(), post.getPostSite());
     }
 }

@@ -1,21 +1,21 @@
 package nsfw.post.history;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.PostMessage;
-import nsfw.post.PostResolvableEntry;
-import nsfw.post.api.PostFetchOptions;
+import nsfw.db.PostEntity;
+import nsfw.post.list.PostListMessage;
 import org.javacord.api.entity.channel.TextChannel;
 
 import java.util.List;
 
 @Slf4j
-@RequiredArgsConstructor
-public class HistoryMessage extends PostMessage {
-
-    private final List<PostResolvableEntry> posts;
+public class HistoryMessage extends PostListMessage {
 
     private final TextChannel textChannel;
+
+    public HistoryMessage(List<PostEntity> posts, TextChannel textChannel) {
+        super(posts);
+        this.textChannel = textChannel;
+    }
 
     public String getTitle() {
         return "Post history";
@@ -23,22 +23,8 @@ public class HistoryMessage extends PostMessage {
 
     public void onHistoryEvent(HistoryEvent event) {
         if (textChannel.equals(event.getChannel())) {
-            posts.add(event.getNewEntry());
+            getPosts().add(event.getNewEntry());
         }
     }
 
-    @Override
-    public int getCount() {
-        return posts.size();
-    }
-
-    @Override
-    public PostFetchOptions getPostFetchOptions() {
-        PostResolvableEntry currentEntry = posts.get(getPage());
-
-        return PostFetchOptions.builder()
-                .postSite(currentEntry.getPostSite())
-                .id(currentEntry.getPostId())
-                .build();
-    }
 }

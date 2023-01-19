@@ -3,17 +3,16 @@ package nsfw.db;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import nsfw.enums.PostSite;
-import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
 @Entity
+@IdClass(PostEntity.class)
 @Table(name = "post")
-@IdClass(PostEntityKey.class)
-public class PostEntity {
+public class PostEntity implements Serializable {
 
     @Id
     private long userId;
@@ -22,9 +21,5 @@ public class PostEntity {
     private long postId;
 
     @Id
-    @Enumerated(EnumType.STRING)
-    private @NonNull PostSite siteName;
-
-    private @NonNull Date storedAt;
-
+    private PostSite site;
 }

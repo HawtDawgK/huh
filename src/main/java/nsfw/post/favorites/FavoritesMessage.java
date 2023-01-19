@@ -1,19 +1,19 @@
 package nsfw.post.favorites;
 
-import lombok.RequiredArgsConstructor;
-import nsfw.post.PostMessage;
-import nsfw.post.PostResolvableEntry;
-import nsfw.post.api.PostFetchOptions;
+import nsfw.db.PostEntity;
+import nsfw.post.list.PostListMessage;
 import org.javacord.api.entity.user.User;
 
 import java.util.List;
 
-@RequiredArgsConstructor
-public class FavoritesMessage extends PostMessage {
+public class FavoritesMessage extends PostListMessage {
 
     private final User user;
 
-    private final List<PostResolvableEntry> posts;
+    public FavoritesMessage(User user, List<PostEntity> posts) {
+        super(posts);
+        this.user = user;
+    }
 
     public String getTitle() {
         return "Favorites for " + user.getMentionTag();
@@ -25,29 +25,13 @@ public class FavoritesMessage extends PostMessage {
         }
 
         if (favoriteEvent.getEventType() == FavoriteEventType.ADDED) {
-            posts.add(favoriteEvent.getAddedPost());
+            getPosts().add(favoriteEvent.getAddedPost());
         } else {
-            int oldSize = posts.size();
-            posts.remove(favoriteEvent.getAddedPost());
+            int oldSize = getPosts().size();
+            getPosts().remove(favoriteEvent.getAddedPost());
             if (oldSize - 1 == getPage()) {
                 setPage(getPage() - 1);
             }
         }
     }
-
-    @Override
-    public int getCount() {
-        return posts.size();
-    }
-
-    @Override
-    public PostFetchOptions getPostFetchOptions() {
-        PostResolvableEntry currentEntry = posts.get(getPage());
-
-        return PostFetchOptions.builder()
-                .postSite(currentEntry.getPostSite())
-                .id(currentEntry.getPostId())
-                .build();
-    }
-
 }
