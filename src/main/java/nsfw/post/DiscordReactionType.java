@@ -1,7 +1,6 @@
 package nsfw.post;
 
 public enum DiscordReactionType {
-    INITIAL,
     NEXT_PAGE,
     RANDOM_PAGE,
     PREVIOUS_PAGE,

@@ -37,6 +37,10 @@ public class PostService {
 
     public PostFetchResult fetchPost(@Nullable TextChannel textChannel, PostFetchOptions options) {
         try {
+            if (options.getId() != null) {
+                return fetchFromCache(options);
+            }
+
             PostApi postApi = options.getPostSite().getPostApi();
 
             ResponseEntity<String> responseEntity = webClient.get().uri(postApi.getUrl(options))
@@ -106,5 +110,14 @@ public class PostService {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    private PostFetchResult fetchFromCache(PostFetchOptions options) {
+        PostEntity postEntity = new PostEntity();
+        postEntity.setPostId(options.getId());
+        postEntity.setSite(options.getPostSite());
+        Post post = postCache.get(postEntity);
+
+        return new PostFetchResult(post, false, "");
     }
 }

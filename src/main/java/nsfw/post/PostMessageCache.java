@@ -10,6 +10,7 @@ import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
 import nsfw.post.history.HistoryEvent;
 import nsfw.post.history.HistoryMessage;
+import nsfw.post.list.PostListMessage;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.component.ActionRow;
@@ -23,6 +24,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,7 +61,7 @@ public class PostMessageCache {
         String deleteMessageId = UUID.randomUUID().toString();
         String deleteFavoriteId = UUID.randomUUID().toString();
 
-        ActionRow[] actionRows = PostMessageButtons.actionRows(nextPageId, randomPageId, previousPageId,
+        List<ActionRow> actionRows = PostMessageButtons.actionRows(nextPageId, randomPageId, previousPageId,
                 addFavoriteId, deleteMessageId, deleteFavoriteId);
 
         postMessageMap.put(nextPageId, new DiscordReactionData(postMessage, DiscordReactionType.NEXT_PAGE, actionRows));
@@ -69,7 +71,7 @@ public class PostMessageCache {
         postMessageMap.put(deleteMessageId, new DiscordReactionData(postMessage, DiscordReactionType.DELETE_MESSAGE, actionRows));
         postMessageMap.put(deleteFavoriteId, new DiscordReactionData(postMessage, DiscordReactionType.DELETE_FAVORITE, actionRows));
 
-        updatePost(new DiscordReactionData(postMessage, DiscordReactionType.INITIAL, actionRows), event.getInteraction());
+        updatePost(new DiscordReactionData(postMessage, null, actionRows), event.getInteraction());
     }
 
     private void nextPage(MessageComponentCreateEvent event) {
@@ -128,7 +130,7 @@ public class PostMessageCache {
         boolean added = favoritesService.addFavorite(user, currentPost);
         String message = added ? "Successfully stored favorite." : "Already stored as favorite.";
 
-        event.getInteraction()
+        event.getMessageComponentInteraction()
                 .createImmediateResponder()
                 .setContent(message)
                 .setFlags(MessageFlag.EPHEMERAL)
@@ -193,11 +195,13 @@ public class PostMessageCache {
 
         InteractionImmediateResponseBuilder immediateResponder = interactionBase.createImmediateResponder();
         immediateResponder.removeAllEmbeds();
-        immediateResponder.addComponents(discordReactionData.actionRows());
+        immediateResponder.addComponents(discordReactionData.actionRowArray());
         immediateResponder.setContent(postMessageable.content());
 
-        if (postFetchResult.isError()) {
-            immediateResponder.addEmbed(postMessageable.embed());
+        if (postFetchResult.isError() ) {
+            immediateResponder.addEmbed(embedService.createErrorEmbed(""));
+        } else if (postMessage instanceof PostListMessage listMessage && listMessage.getPosts().isEmpty()) {
+            immediateResponder.addEmbed(embedService.createErrorEmbed("No posts present."));
         } else {
             postMessage.setCurrentPost(postFetchResult.post());
             immediateResponder.addEmbed(embedService.createPostEmbed(postEmbedOptions));

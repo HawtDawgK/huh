@@ -15,7 +15,4 @@ public record PostMessageable(@NonNull String content, @Nullable EmbedBuilder em
         return new PostMessageable("", embedBuilder);
     }
 
-    public static PostMessageable fromEmbed(EmbedBuilder embed) {
-        return new PostMessageable("", embed);
-    }
 }

@@ -21,12 +21,7 @@ public class PostCache {
         POST_CACHE.put(postEntity, post);
     }
 
-    /**
-     * TODO: Use this in postService
-     * @param postEntityKey
-     * @return
-     */
-    public @Nullable Post get(PostEntity postEntityKey) {
-        return POST_CACHE.get(postEntityKey);
+    public @Nullable Post get(PostEntity postEntity) {
+        return POST_CACHE.get(postEntity);
     }
 }

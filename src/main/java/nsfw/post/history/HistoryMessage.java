@@ -21,6 +21,11 @@ public class HistoryMessage extends PostListMessage {
         return "Post history";
     }
 
+    @Override
+    public String getErrorMessage() {
+        return "No history";
+    }
+
     public void onHistoryEvent(HistoryEvent event) {
         if (textChannel.equals(event.getChannel())) {
             getPosts().add(event.getNewEntry());

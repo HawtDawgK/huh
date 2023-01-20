@@ -22,4 +22,5 @@ public class PostEntity implements Serializable {
 
     @Id
     private PostSite site;
+
 }

@@ -2,7 +2,6 @@ package nsfw.commands;
 
 import lombok.RequiredArgsConstructor;
 import nsfw.db.PostEntity;
-import nsfw.embed.EmbedService;
 import nsfw.post.PostMessage;
 import nsfw.post.PostMessageCache;
 import nsfw.post.favorites.FavoritesMessage;
@@ -19,8 +18,6 @@ import java.util.List;
 public class FavoritesCommand implements Command {
 
     private final FavoritesService favoritesService;
-
-    private final EmbedService embedService;
 
     private final PostMessageCache postMessageCache;
 
@@ -43,14 +40,7 @@ public class FavoritesCommand implements Command {
 
         List<PostEntity> favorites = favoritesService.getFavorites(user.getId());
 
-        // TODO: Handle empty favorites
-        if (favorites.isEmpty()) {
-            event.getSlashCommandInteraction().createImmediateResponder()
-                    .addEmbeds(embedService.createErrorEmbed("No favorites found."))
-                    .respond().join();
-        } else {
-            PostMessage postMessage = new FavoritesMessage(user, favorites);
-            postMessageCache.addPost(event, postMessage);
-        }
+        PostMessage postMessage = new FavoritesMessage(user, favorites);
+        postMessageCache.addPost(event, postMessage);
     }
 }

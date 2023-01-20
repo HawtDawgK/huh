@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.*;
 import nsfw.post.PostMessageFactory;
-import nsfw.post.api.PostFetchException;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -37,7 +36,7 @@ public class PostsCommand implements Command {
     }
 
     @Override
-    public void apply(SlashCommandCreateEvent event) throws CommandException, PostFetchException {
+    public void apply(SlashCommandCreateEvent event) throws CommandException {
         String siteName = event.getSlashCommandInteraction().getOptionByName("site")
                 .flatMap(SlashCommandInteractionOption::getStringValue)
                 .orElseThrow(() -> new CommandException("Site is required"));

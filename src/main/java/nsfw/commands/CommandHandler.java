@@ -3,16 +3,18 @@ package nsfw.commands;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.embed.EmbedService;
-import nsfw.post.api.PostFetchException;
+import nsfw.util.TagUtil;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandInteraction;
+import org.javacord.api.interaction.SlashCommandInteractionOption;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,12 +50,26 @@ public class CommandHandler {
     private void handleSlashCommand(SlashCommandCreateEvent event) {
         try {
             checkNsfwChannel(event.getSlashCommandInteraction());
+            checkDisallowedTags(event.getSlashCommandInteraction());
             commandMap.get(event.getSlashCommandInteraction().getCommandName()).apply(event);
-        } catch (CommandException | PostFetchException e) {
+        } catch (CommandException e) {
             log.error(e.getMessage(), e);
             event.getInteraction().createImmediateResponder()
                     .addEmbed(embedService.createErrorEmbed(e.getMessage()))
                     .respond().join();
+        }
+    }
+
+    public void checkDisallowedTags(SlashCommandInteraction interaction) throws CommandException {
+        String tags = interaction.getOptionByName("tags")
+                .flatMap(SlashCommandInteractionOption::getStringValue)
+                .orElse("");
+
+        List<String> disallowedTags = TagUtil.getDisallowedTags(tags);
+
+        if (!disallowedTags.isEmpty()) {
+            String joinedTags = String.join(",", disallowedTags);
+            throw new CommandException("Searching for %s is not allowed".formatted(joinedTags));
         }
     }
 

@@ -2,7 +2,6 @@ package nsfw.commands;
 
 import lombok.RequiredArgsConstructor;
 import nsfw.db.PostEntity;
-import nsfw.embed.EmbedService;
 import nsfw.post.PostMessage;
 import nsfw.post.PostMessageCache;
 import nsfw.post.history.HistoryMessage;
@@ -19,8 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HistoryCommand implements Command {
 
-    private final EmbedService embedService;
-
     private final PostHistory postHistory;
 
     private final PostMessageCache postMessageCache;
@@ -35,12 +32,6 @@ public class HistoryCommand implements Command {
         TextChannel messageChannel = event.getInteraction().getChannel().
                 orElseThrow(() -> new IllegalArgumentException(""));
         List<PostEntity> postHistoryFromChannel = postHistory.getHistory(messageChannel);
-
-        if (postHistoryFromChannel.isEmpty()) {
-            event.getSlashCommandInteraction().createImmediateResponder()
-                    .addEmbed(embedService.createErrorEmbed("No posts in history."))
-                    .respond().join();
-        }
 
         PostMessage postMessage = new HistoryMessage(postHistoryFromChannel, messageChannel);
         postMessageCache.addPost(event, postMessage);

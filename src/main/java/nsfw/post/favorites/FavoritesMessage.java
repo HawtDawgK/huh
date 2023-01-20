@@ -19,6 +19,11 @@ public class FavoritesMessage extends PostListMessage {
         return "Favorites for " + user.getMentionTag();
     }
 
+    @Override
+    public String getErrorMessage() {
+        return "No favorites";
+    }
+
     public void onFavoriteEvent(FavoriteEvent favoriteEvent) {
         if (!favoriteEvent.getUser().equals(user)) {
             return;

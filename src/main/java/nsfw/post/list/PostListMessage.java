@@ -28,4 +28,6 @@ public abstract class PostListMessage extends PostMessage {
                 .id(currentEntry.getPostId())
                 .build();
     }
+
+    public abstract String getErrorMessage();
 }

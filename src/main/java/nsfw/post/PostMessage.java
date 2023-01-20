@@ -38,4 +38,5 @@ public abstract class PostMessage {
     void randomPage() {
         page = random.nextInt(getCount());
     }
+
 }
