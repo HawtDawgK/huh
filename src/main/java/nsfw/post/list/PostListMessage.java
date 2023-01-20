@@ -1,18 +1,22 @@
 package nsfw.post.list;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import nsfw.db.PostEntity;
 import nsfw.post.PostMessage;
+import nsfw.post.PostService;
 import nsfw.post.api.PostFetchOptions;
 
 import java.util.List;
 
 @Getter
-@RequiredArgsConstructor
 public abstract class PostListMessage extends PostMessage {
 
     private final List<PostEntity> posts;
+
+    protected PostListMessage(PostService postService, List<PostEntity> posts) {
+        super(postService);
+        this.posts = posts;
+    }
 
     @Override
     public int getCount() {
@@ -29,5 +33,4 @@ public abstract class PostListMessage extends PostMessage {
                 .build();
     }
 
-    public abstract String getErrorMessage();
 }

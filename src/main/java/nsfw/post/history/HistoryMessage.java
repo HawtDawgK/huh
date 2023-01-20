@@ -2,6 +2,8 @@ package nsfw.post.history;
 
 import lombok.extern.slf4j.Slf4j;
 import nsfw.db.PostEntity;
+import nsfw.post.PostFetchResult;
+import nsfw.post.PostService;
 import nsfw.post.list.PostListMessage;
 import org.javacord.api.entity.channel.TextChannel;
 
@@ -12,8 +14,8 @@ public class HistoryMessage extends PostListMessage {
 
     private final TextChannel textChannel;
 
-    public HistoryMessage(List<PostEntity> posts, TextChannel textChannel) {
-        super(posts);
+    public HistoryMessage(PostService postService, List<PostEntity> posts, TextChannel textChannel) {
+        super(postService, posts);
         this.textChannel = textChannel;
     }
 
@@ -22,8 +24,12 @@ public class HistoryMessage extends PostListMessage {
     }
 
     @Override
-    public String getErrorMessage() {
-        return "No history";
+    public PostFetchResult getCurrentPost() {
+        if (getPosts().isEmpty()) {
+            return new PostFetchResult(null, false, "No posts in history");
+        }
+
+        return getPostService().fetchPost(textChannel, getPostFetchOptions());
     }
 
     public void onHistoryEvent(HistoryEvent event) {

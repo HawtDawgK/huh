@@ -1,23 +1,36 @@
 package nsfw.post;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.enums.PostSite;
 import nsfw.post.api.PostFetchOptions;
+import org.javacord.api.entity.channel.TextChannel;
 
 @Slf4j
 @Getter
-@RequiredArgsConstructor
 public class PostApiMessage extends PostMessage {
 
     private final int count;
     private final String tags;
     private final PostSite postSite;
+    private final TextChannel textChannel;
+
+    public PostApiMessage(PostService postService, TextChannel textChannel, int count, String tags, PostSite postSite) {
+        super(postService);
+        this.count = count;
+        this.tags = tags;
+        this.postSite = postSite;
+        this.textChannel = textChannel;
+    }
 
     @Override
     public String getTitle() {
         return "";
+    }
+
+    @Override
+    public PostFetchResult getCurrentPost() {
+        return getPostService().fetchPost(textChannel, getPostFetchOptions());
     }
 
     @Override

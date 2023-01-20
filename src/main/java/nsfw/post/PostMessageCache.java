@@ -4,13 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.embed.EmbedService;
 import nsfw.embed.PostEmbedOptions;
-import nsfw.post.api.PostFetchOptions;
 import nsfw.post.favorites.FavoriteEvent;
 import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
 import nsfw.post.history.HistoryEvent;
 import nsfw.post.history.HistoryMessage;
-import nsfw.post.list.PostListMessage;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.component.ActionRow;
@@ -19,7 +17,6 @@ import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.InteractionBase;
-import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -39,8 +36,6 @@ public class PostMessageCache {
     private final FavoritesService favoritesService;
 
     private final EmbedService embedService;
-
-    private final PostService postService;
 
     private static final Map<String, DiscordReactionData> postMessageMap = new ConcurrentHashMap<>();
 
@@ -123,12 +118,18 @@ public class PostMessageCache {
         PostMessage postMessage = postMessageMap.get(event.getMessageComponentInteraction().getCustomId())
                 .postMessage();
 
-        Post currentPost = postMessage.getCurrentPost();
+        PostFetchResult postFetchResult = postMessage.getCurrentPost();
 
-        User user = event.getInteraction().getUser();
+        String message;
 
-        boolean added = favoritesService.addFavorite(user, currentPost);
-        String message = added ? "Successfully stored favorite." : "Already stored as favorite.";
+        if (postFetchResult.isError()) {
+            message = "Could not add favorite.";
+        } else {
+            User user = event.getInteraction().getUser();
+
+            boolean added = favoritesService.addFavorite(user, postFetchResult.post());
+            message = added ? "Successfully stored favorite." : "Already stored as favorite.";
+        }
 
         event.getMessageComponentInteraction()
                 .createImmediateResponder()
@@ -142,9 +143,17 @@ public class PostMessageCache {
 
         User reactingUser = event.getInteraction().getUser();
 
-        boolean removed = favoritesService.removeFavorite(reactingUser, postMessage.getCurrentPost());
+        PostFetchResult postFetchResult = postMessage.getCurrentPost();
 
-        String message = removed ? "Successfully removed favorite." : "Not stored as favorite.";
+        String message;
+
+        if (postFetchResult.isError()) {
+            message = "Coould not remove favorite.";
+        } else if (favoritesService.removeFavorite(reactingUser, postFetchResult.post())) {
+            message = "Successfully removed favorite.";
+        } else {
+            message = "Not stored as favorite.";
+        }
 
         event.getMessageComponentInteraction().createImmediateResponder()
                 .setContent(message)
@@ -179,11 +188,19 @@ public class PostMessageCache {
     public void updatePost(DiscordReactionData discordReactionData, InteractionBase interactionBase) {
         PostMessage postMessage = discordReactionData.postMessage();
 
-        PostFetchOptions postFetchOptions = postMessage.getPostFetchOptions();
-        PostFetchResult postFetchResult = postService.fetchPost(interactionBase.getChannel().orElse(null), postFetchOptions);
+        PostFetchResult postFetchResult = postMessage.getCurrentPost();
+
+        if (postFetchResult.isError()) {
+            interactionBase.createImmediateResponder()
+                    .removeAllEmbeds()
+                    .addComponents(discordReactionData.actionRowArray())
+                    .addEmbed(embedService.createErrorEmbed("No posts present."))
+                    .respond().join();
+            return;
+        }
 
         PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
-                .post(postMessage.getCurrentPost())
+                .post(postFetchResult.post())
                 .title(postMessage.getTitle())
                 .page(postMessage.getPage())
                 .count(postMessage.getCount())
@@ -193,28 +210,19 @@ public class PostMessageCache {
         EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
         PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
 
-        InteractionImmediateResponseBuilder immediateResponder = interactionBase.createImmediateResponder();
-        immediateResponder.removeAllEmbeds();
-        immediateResponder.addComponents(discordReactionData.actionRowArray());
-        immediateResponder.setContent(postMessageable.content());
-
-        if (postFetchResult.isError() ) {
-            immediateResponder.addEmbed(embedService.createErrorEmbed(""));
-        } else if (postMessage instanceof PostListMessage listMessage && listMessage.getPosts().isEmpty()) {
-            immediateResponder.addEmbed(embedService.createErrorEmbed("No posts present."));
-        } else {
-            postMessage.setCurrentPost(postFetchResult.post());
-            immediateResponder.addEmbed(embedService.createPostEmbed(postEmbedOptions));
-        }
-
-        immediateResponder.respond().join();
+        interactionBase.createImmediateResponder()
+                .removeAllEmbeds()
+                .addComponents(discordReactionData.actionRowArray())
+                .setContent(postMessageable.content())
+                .addEmbed(embedService.createPostEmbed(postEmbedOptions))
+                .respond().join();
     }
 
     @EventListener
     public void onApplicationEvent(FavoriteEvent favoriteEvent) {
         postMessageMap.values().stream()
                 .filter(p -> p.postMessage() instanceof FavoritesMessage)
-                .map(FavoritesMessage.class::cast)
+                .map(p -> (FavoritesMessage) p.postMessage())
                 .forEach(p -> p.onFavoriteEvent(favoriteEvent));
     }
 
@@ -222,7 +230,7 @@ public class PostMessageCache {
     public void onApplicationEvent(HistoryEvent historyEvent) {
         postMessageMap.values().stream()
                 .filter(p -> p.postMessage() instanceof HistoryMessage)
-                .map(HistoryMessage.class::cast)
+                .map(p -> (HistoryMessage) p.postMessage())
                 .forEach(p -> p.onHistoryEvent(historyEvent));
     }
 }

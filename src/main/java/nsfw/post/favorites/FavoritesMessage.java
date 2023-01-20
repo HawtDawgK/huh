@@ -1,6 +1,8 @@
 package nsfw.post.favorites;
 
 import nsfw.db.PostEntity;
+import nsfw.post.PostFetchResult;
+import nsfw.post.PostService;
 import nsfw.post.list.PostListMessage;
 import org.javacord.api.entity.user.User;
 
@@ -10,8 +12,8 @@ public class FavoritesMessage extends PostListMessage {
 
     private final User user;
 
-    public FavoritesMessage(User user, List<PostEntity> posts) {
-        super(posts);
+    public FavoritesMessage(PostService postService, User user, List<PostEntity> posts) {
+        super(postService, posts);
         this.user = user;
     }
 
@@ -20,8 +22,12 @@ public class FavoritesMessage extends PostListMessage {
     }
 
     @Override
-    public String getErrorMessage() {
-        return "No favorites";
+    public PostFetchResult getCurrentPost() {
+        if (getPosts().isEmpty()) {
+            return new PostFetchResult(null, true, "No posts in favorites");
+        }
+
+        return getPostService().fetchPost(null, getPostFetchOptions());
     }
 
     public void onFavoriteEvent(FavoriteEvent favoriteEvent) {
