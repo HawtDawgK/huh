@@ -131,11 +131,10 @@ public class PostMessageCache {
             message = added ? "Successfully stored favorite." : "Already stored as favorite.";
         }
 
-        event.getMessageComponentInteraction()
-                .createImmediateResponder()
+        event.getMessageComponentInteraction().createOriginalMessageUpdater()
                 .setContent(message)
                 .setFlags(MessageFlag.EPHEMERAL)
-                .respond().join();
+                .update().join();
     }
 
     private void removeFavorite(MessageComponentCreateEvent event) {

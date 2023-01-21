@@ -1,5 +1,6 @@
 package nsfw.post.favorites;
 
+import lombok.Getter;
 import nsfw.db.PostEntity;
 import nsfw.post.PostFetchResult;
 import nsfw.post.PostService;
@@ -8,6 +9,7 @@ import org.javacord.api.entity.user.User;
 
 import java.util.List;
 
+@Getter
 public class FavoritesMessage extends PostListMessage {
 
     private final User user;
@@ -18,7 +20,7 @@ public class FavoritesMessage extends PostListMessage {
     }
 
     public String getTitle() {
-        return "Favorites for " + user.getMentionTag();
+        return "Favorites for " + user.getName();
     }
 
     @Override
