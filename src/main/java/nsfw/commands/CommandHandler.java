@@ -8,15 +8,14 @@ import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.SlashCommandBuilder;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.SlashCommandInteractionOption;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -41,8 +40,12 @@ public class CommandHandler {
         commandMap.put("history", historyCommand);
         commandMap.put("favorites", favoritesCommand);
 
-        commandMap.values().forEach(command -> discordApi.getServers()
-                .forEach(guild -> command.toSlashCommandBuilder().createForServer(guild).join()));
+        Set<SlashCommandBuilder> slashCommandBuilders = commandMap.values().stream()
+                .map(Command::toSlashCommandBuilder)
+                .collect(Collectors.toSet());
+
+        discordApi.getServers().forEach(server -> discordApi
+                .bulkOverwriteServerApplicationCommands(server, slashCommandBuilders).join());
 
         discordApi.addSlashCommandCreateListener(this::handleSlashCommand);
     }
