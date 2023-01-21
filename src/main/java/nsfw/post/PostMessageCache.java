@@ -148,7 +148,7 @@ public class PostMessageCache {
         String message;
 
         if (postFetchResult.isError()) {
-            message = "Coould not remove favorite.";
+            message = "Could not remove favorite.";
         } else if (favoritesService.removeFavorite(reactingUser, postFetchResult.post())) {
             message = "Successfully removed favorite.";
         } else {
@@ -178,9 +178,9 @@ public class PostMessageCache {
                     .map(Map.Entry::getKey)
                     .forEach(postMessageMap::remove);
         } else {
-            event.getMessageComponentInteraction()
-                    .createImmediateResponder()
+            event.getMessageComponentInteraction().createImmediateResponder()
                     .setContent("Only the author can delete this message")
+                    .setFlags(MessageFlag.EPHEMERAL)
                     .respond().join();
         }
     }

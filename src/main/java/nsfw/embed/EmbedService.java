@@ -45,16 +45,4 @@ public class EmbedService {
         return embedCreateSpec;
     }
 
-    public EmbedBuilder createNoPostsFoundEmbed(String tags) {
-        EmbedBuilder embedBuilder = new EmbedBuilder()
-                .setTitle("No posts found")
-                .setDescription("No posts found for " + tags)
-                .setColor(Color.RED)
-                .setTimestamp(Instant.now());
-
-        User self = discordApi.getYourself();
-        embedBuilder.setFooter(self.getName(), self.getAvatar());
-
-        return embedBuilder;
-    }
 }
