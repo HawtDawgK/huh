@@ -55,7 +55,7 @@ public class AutocompleteService {
                     .block();
 
             CollectionLikeType collectionLikeType = TypeFactory.defaultInstance()
-                    .constructCollectionLikeType(List.class, postSite.getPostApi().getAutocompleteResultType());
+                    .constructCollectionLikeType(List.class, postSite.getPostApi().getAutocompleteResultType().getClass());
 
             List<AutocompleteResult> autocompleteResults = objectMapper.readValue(responseBody, collectionLikeType);
 
