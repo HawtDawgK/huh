@@ -2,7 +2,6 @@ package nsfw.post.api;
 
 import com.fasterxml.jackson.databind.JavaType;
 import nsfw.commands.CommandException;
-import nsfw.enums.PostSite;
 import nsfw.post.autocomplete.AutocompleteResult;
 
 import java.util.Optional;
@@ -14,9 +13,7 @@ public interface PostApi {
      */
     String getBaseUrl();
 
-    PostSite getSite();
-
-    Class<? extends AutocompleteResult> getAutocompleteResultType();
+    AutocompleteResult getAutocompleteResultType();
 
     default String getAutocompleteUrl(String tags) {
         return getBaseUrl() + "autocomplete.php?q=" + tags;

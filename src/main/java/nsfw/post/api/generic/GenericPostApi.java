@@ -41,8 +41,8 @@ public abstract class GenericPostApi implements PostApi {
     }
 
     @Override
-    public Class<? extends AutocompleteResult> getAutocompleteResultType() {
-        return AutocompleteResultImpl.class;
+    public AutocompleteResult getAutocompleteResultType() {
+        return new AutocompleteResultImpl();
     }
 
     @Override

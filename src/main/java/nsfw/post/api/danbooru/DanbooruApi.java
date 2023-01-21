@@ -1,6 +1,5 @@
 package nsfw.post.api.danbooru;
 
-import nsfw.enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.post.api.*;
 import nsfw.post.api.generic.GenericPostApi;
@@ -15,11 +14,6 @@ public class DanbooruApi extends GenericPostApi {
     @Override
     public String getBaseUrl() {
         return "https://danbooru.donmai.us/";
-    }
-
-    @Override
-    public PostSite getSite() {
-        return PostSite.DANBOORU;
     }
 
     @Override
@@ -57,8 +51,8 @@ public class DanbooruApi extends GenericPostApi {
     }
 
     @Override
-    public Class<? extends AutocompleteResult> getAutocompleteResultType() {
-        return DanbooruAutocompleteResult.class;
+    public AutocompleteResult getAutocompleteResultType() {
+        return new DanbooruAutocompleteResult();
     }
 
 }

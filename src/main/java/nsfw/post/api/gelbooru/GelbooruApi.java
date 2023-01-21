@@ -1,6 +1,5 @@
 package nsfw.post.api.gelbooru;
 
-import nsfw.enums.PostSite;
 import nsfw.post.api.generic.GenericPostApi;
 
 public class GelbooruApi extends GenericPostApi {
@@ -8,11 +7,6 @@ public class GelbooruApi extends GenericPostApi {
     @Override
     public String getBaseUrl() {
         return "https://gelbooru.com/";
-    }
-
-    @Override
-    public PostSite getSite() {
-        return PostSite.GELBOORU;
     }
 
     @Override

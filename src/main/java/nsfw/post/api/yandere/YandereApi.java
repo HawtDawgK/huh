@@ -1,6 +1,5 @@
 package nsfw.post.api.yandere;
 
-import nsfw.enums.PostSite;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.api.generic.GenericPostApi;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -10,11 +9,6 @@ public class YandereApi extends GenericPostApi  {
     @Override
     public String getBaseUrl() {
         return "https://yande.re";
-    }
-
-    @Override
-    public PostSite getSite() {
-        return PostSite.YANDERE;
     }
 
     @Override
