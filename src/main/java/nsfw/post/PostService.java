@@ -63,6 +63,7 @@ public class PostService {
             }
 
             Post post = postQueryResult.getPosts().get(0);
+            post.setPostSite(options.getPostSite());
 
             List<String> disallowedTags = TagUtil.getDisallowedTags(post.getTags());
             if (!disallowedTags.isEmpty()) {
