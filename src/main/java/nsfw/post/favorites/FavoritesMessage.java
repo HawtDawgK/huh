@@ -33,10 +33,6 @@ public class FavoritesMessage extends PostListMessage {
     }
 
     public void onFavoriteEvent(FavoriteEvent favoriteEvent) {
-        if (!favoriteEvent.getUser().equals(user)) {
-            return;
-        }
-
         if (favoriteEvent.getEventType() == FavoriteEventType.ADDED) {
             getPosts().add(favoriteEvent.getAddedPost());
         } else {

@@ -34,15 +34,21 @@ public abstract class PostMessage {
     public abstract PostFetchResult getCurrentPost();
 
     void nextPage() {
-        page = Math.floorMod(page + 1, getCount());
+        if (getCount() != 0) {
+            page = Math.floorMod(page + 1, getCount());
+        }
     }
 
     void previousPage() {
-        page = Math.floorMod(page - 1, getCount());
+        if (getCount() != 0) {
+            page = Math.floorMod(page - 1, getCount());
+        }
     }
 
     void randomPage() {
-        page = random.nextInt(getCount());
+        if (getCount() != 0) {
+            page = random.nextInt(getCount());
+        }
     }
 
 }

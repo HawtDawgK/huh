@@ -10,20 +10,19 @@ import nsfw.post.favorites.FavoritesService;
 import nsfw.post.history.HistoryEvent;
 import nsfw.post.history.HistoryMessage;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageFlag;
-import org.javacord.api.entity.message.component.ActionRow;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
-import org.javacord.api.interaction.InteractionBase;
+import org.javacord.api.interaction.MessageComponentInteraction;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -37,7 +36,7 @@ public class PostMessageCache {
 
     private final EmbedService embedService;
 
-    private static final Map<String, DiscordReactionData> postMessageMap = new ConcurrentHashMap<>();
+    private static final Map<Long, PostMessage> postMessageMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void postConstruct() {
@@ -49,74 +48,88 @@ public class PostMessageCache {
             return;
         }
 
-        String nextPageId = UUID.randomUUID().toString();
-        String randomPageId = UUID.randomUUID().toString();
-        String previousPageId = UUID.randomUUID().toString();
-        String addFavoriteId = UUID.randomUUID().toString();
-        String deleteMessageId = UUID.randomUUID().toString();
-        String deleteFavoriteId = UUID.randomUUID().toString();
+        Message message;
+        PostFetchResult postFetchResult = postMessage.getCurrentPost();
 
-        List<ActionRow> actionRows = PostMessageButtons.actionRows(nextPageId, randomPageId, previousPageId,
-                addFavoriteId, deleteMessageId, deleteFavoriteId);
+        if (postFetchResult.isError()) {
+            EmbedBuilder postEmbed = embedService.createErrorEmbed(postFetchResult.message());
+            message = event.getSlashCommandInteraction().createImmediateResponder()
+                    .addEmbed(postEmbed)
+                    .addComponents(PostMessageButtons.actionRows())
+                    .respond().join()
+                    .update().join();
+        } else {
+            PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
+                    .post(postFetchResult.post())
+                    .title(postMessage.getTitle())
+                    .page(postMessage.getPage())
+                    .count(postMessage.getCount())
+                    .post(postFetchResult.post())
+                    .build();
 
-        postMessageMap.put(nextPageId, new DiscordReactionData(postMessage, DiscordReactionType.NEXT_PAGE, actionRows));
-        postMessageMap.put(randomPageId, new DiscordReactionData(postMessage, DiscordReactionType.RANDOM_PAGE, actionRows));
-        postMessageMap.put(previousPageId, new DiscordReactionData(postMessage, DiscordReactionType.PREVIOUS_PAGE, actionRows));
-        postMessageMap.put(addFavoriteId, new DiscordReactionData(postMessage, DiscordReactionType.ADD_FAVORITE, actionRows));
-        postMessageMap.put(deleteMessageId, new DiscordReactionData(postMessage, DiscordReactionType.DELETE_MESSAGE, actionRows));
-        postMessageMap.put(deleteFavoriteId, new DiscordReactionData(postMessage, DiscordReactionType.DELETE_FAVORITE, actionRows));
+            EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
+            PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
 
-        updatePost(new DiscordReactionData(postMessage, null, actionRows), event.getInteraction());
+            message = event.getSlashCommandInteraction().createImmediateResponder()
+                    .addEmbed(postMessageable.embed())
+                    .setContent(postMessageable.content())
+                    .addComponents(PostMessageButtons.actionRows())
+                    .respond().join()
+                    .update().join();
+        }
+
+        postMessageMap.put(message.getId(), postMessage);
     }
 
     private void nextPage(MessageComponentCreateEvent event) {
-        String customId = event.getMessageComponentInteraction().getCustomId();
-        DiscordReactionData discordReactionData = postMessageMap.get(customId);
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
+        PostMessage postMessage = postMessageMap.get(messageId);
 
-        discordReactionData.postMessage().nextPage();
-        updatePost(discordReactionData, event.getInteraction());
+        postMessage.nextPage();
+        updatePost(postMessage, event.getMessageComponentInteraction());
     }
 
     public void previousPage(MessageComponentCreateEvent event) {
-        String customId = event.getMessageComponentInteraction().getCustomId();
-        DiscordReactionData discordReactionData = postMessageMap.get(customId);
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
+        PostMessage postMessage = postMessageMap.get(messageId);
 
-        discordReactionData.postMessage().previousPage();
-        updatePost(discordReactionData, event.getInteraction());
+        postMessage.previousPage();
+        updatePost(postMessage, event.getMessageComponentInteraction());
     }
 
     public void randomPage(MessageComponentCreateEvent event) {
-        String customId = event.getMessageComponentInteraction().getCustomId();
-        DiscordReactionData discordReactionData = postMessageMap.get(customId);
-        discordReactionData.postMessage().randomPage();
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
+        PostMessage postMessage = postMessageMap.get(messageId);
+        postMessage.randomPage();
 
-        updatePost(discordReactionData, event.getInteraction());
+        updatePost(postMessage, event.getMessageComponentInteraction());
     }
 
     public void handleInteraction(MessageComponentCreateEvent event) {
-        String customId = event.getMessageComponentInteraction().getCustomId();
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
 
-        DiscordReactionData discordReactionData = postMessageMap.get(customId);
+        PostMessage postMessage = postMessageMap.get(messageId);
 
-        if (discordReactionData == null) {
-            log.error("Received unknown interaction " + customId);
+        if (postMessage == null) {
+            log.error("Received unknown interaction " + messageId);
             return;
         }
 
-        switch (discordReactionData.actionType()) {
-            case NEXT_PAGE -> nextPage(event);
-            case RANDOM_PAGE -> randomPage(event);
-            case PREVIOUS_PAGE -> previousPage(event);
-            case ADD_FAVORITE -> addFavorite(event);
-            case DELETE_FAVORITE -> removeFavorite(event);
-            case DELETE_MESSAGE -> deleteMessage(event);
-            default -> log.error("Incorrect action type: " + discordReactionData.actionType());
+        String customId = event.getMessageComponentInteraction().getCustomId();
+        switch (customId) {
+            case "nextPageId" -> nextPage(event);
+            case "randomPageId" -> randomPage(event);
+            case "previousPageId" -> previousPage(event);
+            case "addFavoriteId" -> addFavorite(event);
+            case "deleteFavoriteId" -> removeFavorite(event);
+            case "deleteMessageId" -> deleteMessage(event);
+            default -> log.error("Incorrect custom id: " + customId);
         }
     }
 
     private void addFavorite(MessageComponentCreateEvent event) {
-        PostMessage postMessage = postMessageMap.get(event.getMessageComponentInteraction().getCustomId())
-                .postMessage();
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
+        PostMessage postMessage = postMessageMap.get(messageId);
 
         PostFetchResult postFetchResult = postMessage.getCurrentPost();
 
@@ -131,14 +144,16 @@ public class PostMessageCache {
             message = added ? "Successfully stored favorite." : "Already stored as favorite.";
         }
 
-        event.getMessageComponentInteraction().createOriginalMessageUpdater()
+        event.getMessageComponentInteraction().createImmediateResponder()
                 .setContent(message)
+                .addComponents(PostMessageButtons.actionRows())
                 .setFlags(MessageFlag.EPHEMERAL)
-                .update().join();
+                .respond().join();
     }
 
     private void removeFavorite(MessageComponentCreateEvent event) {
-        PostMessage postMessage = postMessageMap.get(event.getMessageComponentInteraction().getCustomId()).postMessage();
+        long messageId = event.getMessageComponentInteraction().getId();
+        PostMessage postMessage = postMessageMap.get(messageId);
 
         User reactingUser = event.getInteraction().getUser();
 
@@ -156,12 +171,13 @@ public class PostMessageCache {
 
         event.getMessageComponentInteraction().createImmediateResponder()
                 .setContent(message)
+                .addComponents(PostMessageButtons.actionRows())
                 .setFlags(MessageFlag.EPHEMERAL)
                 .respond().join();
     }
 
     private void deleteMessage(MessageComponentCreateEvent event) {
-        String customId = event.getMessageComponentInteraction().getCustomId();
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
 
         User reactingUser = event.getInteraction().getUser();
         User author = event.getInteraction().getUser();
@@ -169,32 +185,25 @@ public class PostMessageCache {
         // Only author can delete the message
         if (reactingUser.equals(author)) {
             event.getMessageComponentInteraction().getMessage().delete().join();
-
-            PostMessage postMessage = postMessageMap.get(customId).postMessage();
-
-            postMessageMap.entrySet().stream()
-                    .filter(entry -> entry.getValue().postMessage().getUuid().equals(postMessage.getUuid()))
-                    .map(Map.Entry::getKey)
-                    .forEach(postMessageMap::remove);
+            postMessageMap.remove(messageId);
         } else {
             event.getMessageComponentInteraction().createImmediateResponder()
                     .setContent("Only the author can delete this message")
+                    .addComponents(PostMessageButtons.actionRows())
                     .setFlags(MessageFlag.EPHEMERAL)
                     .respond().join();
         }
     }
 
-    public void updatePost(DiscordReactionData discordReactionData, InteractionBase interactionBase) {
-        PostMessage postMessage = discordReactionData.postMessage();
-
+    public void updatePost(PostMessage postMessage, MessageComponentInteraction interactionBase) {
         PostFetchResult postFetchResult = postMessage.getCurrentPost();
 
         if (postFetchResult.isError()) {
-            interactionBase.createImmediateResponder()
+            interactionBase.createOriginalMessageUpdater()
                     .removeAllEmbeds()
-                    .addComponents(discordReactionData.actionRowArray())
-                    .addEmbed(embedService.createErrorEmbed("No posts present."))
-                    .respond().join();
+                    .addComponents(PostMessageButtons.actionRows())
+                    .addEmbed(embedService.createErrorEmbed(postFetchResult.message()))
+                    .update().join();
             return;
         }
 
@@ -209,27 +218,74 @@ public class PostMessageCache {
         EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
         PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
 
-        interactionBase.createImmediateResponder()
+        interactionBase.createOriginalMessageUpdater()
                 .removeAllEmbeds()
-                .addComponents(discordReactionData.actionRowArray())
+                .addComponents(PostMessageButtons.actionRows())
                 .setContent(postMessageable.content())
                 .addEmbed(embedService.createPostEmbed(postEmbedOptions))
-                .respond().join();
+                .update().join();
     }
 
     @EventListener
     public void onApplicationEvent(FavoriteEvent favoriteEvent) {
         postMessageMap.values().stream()
-                .filter(p -> p.postMessage() instanceof FavoritesMessage)
-                .map(p -> (FavoritesMessage) p.postMessage())
-                .forEach(p -> p.onFavoriteEvent(favoriteEvent));
+                .filter(FavoritesMessage.class::isInstance)
+                .map(FavoritesMessage.class::cast)
+                .filter(p -> p.getUser().getId()  == favoriteEvent.getUser().getId())
+                .forEach(p -> {
+                    p.onFavoriteEvent(favoriteEvent);
+                    updateMessage(p);
+                });
     }
 
     @EventListener
     public void onApplicationEvent(HistoryEvent historyEvent) {
         postMessageMap.values().stream()
-                .filter(p -> p.postMessage() instanceof HistoryMessage)
-                .map(p -> (HistoryMessage) p.postMessage())
-                .forEach(p -> p.onHistoryEvent(historyEvent));
+                .filter(HistoryMessage.class::isInstance)
+                .map(HistoryMessage.class::cast)
+                .filter(historyMessage -> historyEvent.getChannel().getId() == historyMessage.getTextChannel().getId())
+                .forEach(p -> {
+                    p.onHistoryEvent(historyEvent);
+                    updateMessage(p);
+                });
+    }
+
+    private void updateMessage(PostMessage postMessage) {
+        PostFetchResult postFetchResult = postMessage.getCurrentPost();
+
+        Optional<Long> messageId = postMessageMap.entrySet().stream()
+                .filter(entry -> entry.getValue().getUuid().equals(postMessage.getUuid()))
+                .map(Map.Entry::getKey)
+                .findFirst();
+
+        if (messageId.isEmpty()) {
+            return;
+        }
+
+        Optional<Message> optionalMessage = discordApi.getCachedMessageById(messageId.get());
+
+        if (optionalMessage.isEmpty()) {
+            return;
+        }
+
+        Message message = optionalMessage.get();
+
+        if (postFetchResult.isError()) {
+            message.edit(postFetchResult.message(), embedService.createErrorEmbed("No posts present.")).join();
+            return;
+        }
+
+        PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
+                .post(postFetchResult.post())
+                .title(postMessage.getTitle())
+                .page(postMessage.getPage())
+                .count(postMessage.getCount())
+                .post(postFetchResult.post())
+                .build();
+
+        EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
+        PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
+
+        message.edit(postMessageable.content(), postEmbed);
     }
 }

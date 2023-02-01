@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nsfw.enums.PostSite;
 import nsfw.post.api.PostFetchOptions;
 import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.entity.message.Message;
 
 @Slf4j
 @Getter

@@ -29,8 +29,6 @@ public class PostHistory {
 
     public List<PostEntity> getHistory(TextChannel textChannel) {
         List<PostEntity> currHistory = history.getOrDefault(textChannel, new ArrayList<>());
-
-        // Done to create unmodifiable copy
         return new ArrayList<>(currHistory);
     }
 }
