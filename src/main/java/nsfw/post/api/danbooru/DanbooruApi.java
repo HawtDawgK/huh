@@ -1,9 +1,10 @@
 package nsfw.post.api.danbooru;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.post.api.*;
 import nsfw.post.api.generic.GenericPostApi;
-import nsfw.post.autocomplete.AutocompleteResult;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Optional;
@@ -51,8 +52,8 @@ public class DanbooruApi extends GenericPostApi {
     }
 
     @Override
-    public AutocompleteResult getAutocompleteResultType() {
-        return new DanbooruAutocompleteResult();
+    public JavaType getAutocompleteResultType() {
+        return TypeFactory.defaultInstance().constructType(DanbooruAutocompleteResult.class);
     }
 
 }

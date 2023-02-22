@@ -1,5 +1,7 @@
 package nsfw.post.api.yandere;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.api.generic.GenericPostApi;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -9,6 +11,20 @@ public class YandereApi extends GenericPostApi  {
     @Override
     public String getBaseUrl() {
         return "https://yande.re";
+    }
+
+    @Override
+    public JavaType getAutocompleteResultType() {
+        return TypeFactory.defaultInstance().constructType(YandereAutocompleteResult.class);
+    }
+
+    @Override
+    public String getAutocompleteUrl(String tags) {
+        return UriComponentsBuilder.fromUriString(getBaseUrl())
+                .path("tag.xml")
+                .queryParam("limit", "25")
+                .queryParam("name", tags)
+                .toUriString();
     }
 
     @Override

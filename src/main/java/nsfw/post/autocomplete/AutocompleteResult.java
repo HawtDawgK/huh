@@ -7,5 +7,4 @@ public interface AutocompleteResult {
 
     String getValue();
 
-    boolean isJson();
 }

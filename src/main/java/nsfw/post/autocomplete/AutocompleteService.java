@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.enums.PostSite;
+import nsfw.post.api.yandere.YandereAutocompleteResult;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.event.interaction.AutocompleteCreateEvent;
 import org.javacord.api.interaction.AutocompleteInteraction;
@@ -27,6 +29,8 @@ public class AutocompleteService {
     private final DiscordApi discordApi;
 
     private final ObjectMapper objectMapper;
+
+    private final XmlMapper xmlMapper;
 
     private final WebClient webClient;
 
@@ -54,14 +58,26 @@ public class AutocompleteService {
                     .bodyToMono(String.class)
                     .block();
 
-            CollectionLikeType collectionLikeType = TypeFactory.defaultInstance()
-                    .constructCollectionLikeType(List.class, postSite.getPostApi().getAutocompleteResultType().getClass());
+            List<AutocompleteResult> autocompleteResults;
 
-            List<AutocompleteResult> autocompleteResults = objectMapper.readValue(responseBody, collectionLikeType);
+            if (postSite == PostSite.YANDERE) {
+                YandereAutocompleteResult yandereAutocompleteResult = xmlMapper
+                        .readValue(responseBody, postSite.getPostApi().getAutocompleteResultType());
+
+                autocompleteResults = yandereAutocompleteResult.getTags().stream()
+                        .map(AutocompleteResult.class::cast)
+                        .toList();
+            } else {
+                CollectionLikeType collectionLikeType = TypeFactory.defaultInstance()
+                        .constructCollectionLikeType(List.class, postSite.getPostApi().getAutocompleteResultType().getClass());
+
+                autocompleteResults = objectMapper.readValue(responseBody, collectionLikeType);
+            }
 
             List<SlashCommandOptionChoice> choices = autocompleteResults.stream()
                     .map(result -> SlashCommandOptionChoice.create(result.getLabel(), result.getValue()))
                     .toList();
+
             event.getAutocompleteInteraction().respondWithChoices(choices).join();
         } catch (AutocompleteException | JsonProcessingException e) {
             log.error("Error during autocomplete ", e);

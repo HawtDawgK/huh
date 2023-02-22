@@ -13,7 +13,7 @@ public interface PostApi {
      */
     String getBaseUrl();
 
-    AutocompleteResult getAutocompleteResultType();
+    JavaType getAutocompleteResultType();
 
     default String getAutocompleteUrl(String tags) {
         return getBaseUrl() + "autocomplete.php?q=" + tags;

@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import nsfw.post.PostQueryResultImpl;
 import nsfw.post.api.PostApi;
 import nsfw.post.api.PostFetchOptions;
-import nsfw.post.autocomplete.AutocompleteResult;
 import nsfw.post.autocomplete.AutocompleteResultImpl;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,8 +40,8 @@ public abstract class GenericPostApi implements PostApi {
     }
 
     @Override
-    public AutocompleteResult getAutocompleteResultType() {
-        return new AutocompleteResultImpl();
+    public JavaType getAutocompleteResultType() {
+        return TypeFactory.defaultInstance().constructType(AutocompleteResultImpl.class);
     }
 
     @Override
