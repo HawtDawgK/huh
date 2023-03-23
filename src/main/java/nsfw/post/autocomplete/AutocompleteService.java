@@ -58,21 +58,7 @@ public class AutocompleteService {
                     .bodyToMono(String.class)
                     .block();
 
-            List<AutocompleteResult> autocompleteResults;
-
-            if (postSite == PostSite.YANDERE) {
-                YandereAutocompleteResult yandereAutocompleteResult = xmlMapper
-                        .readValue(responseBody, postSite.getPostApi().getAutocompleteResultType());
-
-                autocompleteResults = yandereAutocompleteResult.getTags().stream()
-                        .map(AutocompleteResult.class::cast)
-                        .toList();
-            } else {
-                CollectionLikeType collectionLikeType = TypeFactory.defaultInstance()
-                        .constructCollectionLikeType(List.class, postSite.getPostApi().getAutocompleteResultType().getClass());
-
-                autocompleteResults = objectMapper.readValue(responseBody, collectionLikeType);
-            }
+            List<AutocompleteResult> autocompleteResults = parseResponseBody(postSite, responseBody);
 
             List<SlashCommandOptionChoice> choices = autocompleteResults.stream()
                     .map(result -> SlashCommandOptionChoice.create(result.getLabel(), result.getValue()))
@@ -83,5 +69,21 @@ public class AutocompleteService {
             log.error("Error during autocomplete ", e);
             event.getAutocompleteInteraction().respondWithChoices(Collections.emptyList()).join();
         }
+    }
+
+    private List<AutocompleteResult> parseResponseBody(PostSite postSite, String responseBody) throws JsonProcessingException {
+        if (postSite == PostSite.YANDERE) {
+            YandereAutocompleteResult yandereAutocompleteResult = xmlMapper
+                    .readValue(responseBody, postSite.getPostApi().getAutocompleteResultType());
+
+            return yandereAutocompleteResult.getTags().stream()
+                    .map(AutocompleteResult.class::cast)
+                    .toList();
+        }
+
+        CollectionLikeType collectionLikeType = TypeFactory.defaultInstance()
+                .constructCollectionLikeType(List.class, postSite.getPostApi().getAutocompleteResultType().getClass());
+
+        return objectMapper.readValue(responseBody, collectionLikeType);
     }
 }
