@@ -2,7 +2,6 @@ package nsfw.post.api;
 
 import com.fasterxml.jackson.databind.JavaType;
 import nsfw.commands.CommandException;
-import nsfw.post.autocomplete.AutocompleteResult;
 
 import java.util.Optional;
 

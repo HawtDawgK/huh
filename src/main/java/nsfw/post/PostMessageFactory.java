@@ -18,6 +18,8 @@ public class PostMessageFactory {
 
     private final PostMessageCache postMessageCache;
 
+    private final PostmessageableService postmessageableService;
+
     public void createPost(SlashCommandCreateEvent event, String tags, PostSite postSite) throws CommandException {
         PostFetchOptions postFetchOptions = PostFetchOptions.builder()
                 .postSite(postSite)
@@ -33,7 +35,7 @@ public class PostMessageFactory {
         int maxCount = postSite.getPostApi().getMaxCount().map(c -> Math.min(c, count)).orElse(count);
 
         TextChannel textChannel = event.getInteraction().getChannel().orElseThrow(() -> new CommandException("No channel"));
-        PostMessage postMessage = new PostApiMessage(postService, textChannel, maxCount, tags, postSite);
+        PostMessage postMessage = new PostApiMessage(postService, postmessageableService, textChannel, maxCount, tags, postSite);
 
         postMessageCache.addPost(event, postMessage);
     }

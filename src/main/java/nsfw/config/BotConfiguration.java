@@ -41,4 +41,5 @@ public class BotConfiguration {
                 .setWaitForServersOnStartup(true)
                 .login().join();
     }
+
 }

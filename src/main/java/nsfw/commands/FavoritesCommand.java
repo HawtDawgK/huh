@@ -5,6 +5,7 @@ import nsfw.db.PostEntity;
 import nsfw.post.PostMessage;
 import nsfw.post.PostMessageCache;
 import nsfw.post.PostService;
+import nsfw.post.PostmessageableService;
 import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
 import org.javacord.api.entity.user.User;
@@ -23,6 +24,8 @@ public class FavoritesCommand implements Command {
     private final PostMessageCache postMessageCache;
 
     private final PostService postService;
+
+    private final PostmessageableService postmessageableService;
 
     @Override
     public SlashCommandBuilder toSlashCommandBuilder() {
@@ -43,7 +46,7 @@ public class FavoritesCommand implements Command {
 
         List<PostEntity> favorites = favoritesService.getFavorites(user.getId());
 
-        PostMessage postMessage = new FavoritesMessage(postService, user, favorites);
+        PostMessage postMessage = new FavoritesMessage(postService, postmessageableService, user, favorites);
         postMessageCache.addPost(event, postMessage);
     }
 }

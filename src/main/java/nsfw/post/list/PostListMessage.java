@@ -4,6 +4,7 @@ import lombok.Getter;
 import nsfw.db.PostEntity;
 import nsfw.post.PostMessage;
 import nsfw.post.PostService;
+import nsfw.post.PostmessageableService;
 import nsfw.post.api.PostFetchOptions;
 
 import java.util.List;
@@ -13,8 +14,8 @@ public abstract class PostListMessage extends PostMessage {
 
     private final List<PostEntity> posts;
 
-    protected PostListMessage(PostService postService, List<PostEntity> posts) {
-        super(postService);
+    protected PostListMessage(PostService postService, PostmessageableService postmessageableService, List<PostEntity> posts) {
+        super(postService, postmessageableService);
         this.posts = posts;
     }
 

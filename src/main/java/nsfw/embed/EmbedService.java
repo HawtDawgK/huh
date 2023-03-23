@@ -17,16 +17,23 @@ public class EmbedService {
 
     private final DiscordApi discordApi;
 
+    public EmbedBuilder createEmbed(PostEmbedOptions postEmbedOptions) {
+        if (postEmbedOptions.getPostFetchResult().isError()) {
+            return createErrorEmbed(postEmbedOptions.getPostFetchResult().message());
+        }
+        return createPostEmbed(postEmbedOptions);
+    }
+
     public EmbedBuilder createPostEmbed(PostEmbedOptions options) {
         EmbedBuilder embedBuilder = new EmbedBuilder();
 
         embedBuilder.setTitle(options.getTitle());
         embedBuilder.setDescription(options.getDescription());
-        embedBuilder.setTimestamp(options.getPost().getCreatedAt().toInstant());
-        embedBuilder.setImage(options.getPost().getFileUrl());
+        embedBuilder.setTimestamp(options.getPostFetchResult().post().getCreatedAt().toInstant());
+        embedBuilder.setImage(options.getPostFetchResult().post().getFileUrl());
 
         String footer = String.format("Page %d of %d • Score: %d",
-                options.getPage() + 1, options.getCount(), options.getPost().getScore());
+                options.getPage() + 1, options.getCount(), options.getPostFetchResult().post().getScore());
         embedBuilder.setFooter(footer);
 
         return embedBuilder;

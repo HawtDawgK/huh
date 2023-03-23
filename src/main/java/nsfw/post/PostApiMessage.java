@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import nsfw.enums.PostSite;
 import nsfw.post.api.PostFetchOptions;
 import org.javacord.api.entity.channel.TextChannel;
-import org.javacord.api.entity.message.Message;
 
 @Slf4j
 @Getter
@@ -16,8 +15,8 @@ public class PostApiMessage extends PostMessage {
     private final PostSite postSite;
     private final TextChannel textChannel;
 
-    public PostApiMessage(PostService postService, TextChannel textChannel, int count, String tags, PostSite postSite) {
-        super(postService);
+    public PostApiMessage(PostService postService, PostmessageableService postmessageableService, TextChannel textChannel, int count, String tags, PostSite postSite) {
+        super(postService, postmessageableService);
         this.count = count;
         this.tags = tags;
         this.postSite = postSite;

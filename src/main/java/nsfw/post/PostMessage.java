@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import nsfw.embed.PostEmbedOptions;
 import nsfw.post.api.PostFetchOptions;
 
 import java.util.Random;
@@ -24,6 +25,8 @@ public abstract class PostMessage {
     private final Random random = new Random();
 
     private final PostService postService;
+
+    private final PostmessageableService postmessageableService;
 
     public abstract int getCount();
 
@@ -51,4 +54,14 @@ public abstract class PostMessage {
         }
     }
 
+    public PostMessageable toPostMessageable() {
+        PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
+                .postFetchResult(getCurrentPost())
+                .title(getTitle())
+                .page(getPage())
+                .count(getCount())
+                .build();
+
+        return postmessageableService.fromPost(postEmbedOptions);
+    }
 }

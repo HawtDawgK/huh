@@ -24,11 +24,12 @@ public class Rule34Api extends GenericPostApi {
     public String getUrl(PostFetchOptions options) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(getBaseUrl());
 
-        String tags = "";
-
         uriComponentsBuilder.queryParam("page", "dapi");
         uriComponentsBuilder.queryParam("s", "post");
         uriComponentsBuilder.queryParam("q", "index");
+        uriComponentsBuilder.queryParam("limit", 1);
+
+        String tags = "";
 
         if (options.getId() != null) {
             tags += "id:" + options.getId();
@@ -43,8 +44,6 @@ public class Rule34Api extends GenericPostApi {
         if (options.getPage() != null) {
             uriComponentsBuilder.queryParam("pid", options.getPage());
         }
-
-        uriComponentsBuilder.queryParam("limit", 1);
 
         return uriComponentsBuilder.toUriString();
     }

@@ -5,6 +5,7 @@ import nsfw.db.PostEntity;
 import nsfw.post.PostMessage;
 import nsfw.post.PostMessageCache;
 import nsfw.post.PostService;
+import nsfw.post.PostmessageableService;
 import nsfw.post.history.HistoryMessage;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
@@ -25,6 +26,8 @@ public class HistoryCommand implements Command {
 
     private final PostService postService;
 
+    private final PostmessageableService postmessageableService;
+
     @Override
     public SlashCommandBuilder toSlashCommandBuilder() {
         return SlashCommand.with("history", "Shows post history per channel");
@@ -36,7 +39,8 @@ public class HistoryCommand implements Command {
                 orElseThrow(() -> new IllegalArgumentException(""));
         List<PostEntity> postHistoryFromChannel = postHistory.getHistory(messageChannel);
 
-        PostMessage postMessage = new HistoryMessage(postService, postHistoryFromChannel, messageChannel);
+        PostMessage postMessage = new HistoryMessage(postService, postmessageableService,
+                postHistoryFromChannel, messageChannel);
         postMessageCache.addPost(event, postMessage);
     }
 

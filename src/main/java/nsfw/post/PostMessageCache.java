@@ -3,7 +3,6 @@ package nsfw.post;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.embed.EmbedService;
-import nsfw.embed.PostEmbedOptions;
 import nsfw.post.favorites.FavoriteEvent;
 import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
@@ -59,16 +58,7 @@ public class PostMessageCache {
                     .respond().join()
                     .update().join();
         } else {
-            PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
-                    .post(postFetchResult.post())
-                    .title(postMessage.getTitle())
-                    .page(postMessage.getPage())
-                    .count(postMessage.getCount())
-                    .post(postFetchResult.post())
-                    .build();
-
-            EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
-            PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
+            PostMessageable postMessageable = postMessage.toPostMessageable();
 
             message = event.getSlashCommandInteraction().createImmediateResponder()
                     .addEmbed(postMessageable.embed())
@@ -207,23 +197,7 @@ public class PostMessageCache {
             return;
         }
 
-        PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
-                .post(postFetchResult.post())
-                .title(postMessage.getTitle())
-                .page(postMessage.getPage())
-                .count(postMessage.getCount())
-                .post(postFetchResult.post())
-                .build();
-
-        EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
-        PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
-
-        interactionBase.createOriginalMessageUpdater()
-                .removeAllEmbeds()
-                .addComponents(PostMessageButtons.actionRows())
-                .setContent(postMessageable.content())
-                .addEmbed(embedService.createPostEmbed(postEmbedOptions))
-                .update().join();
+        updateInteraction(interactionBase, postMessage);
     }
 
     @EventListener
@@ -234,7 +208,7 @@ public class PostMessageCache {
                 .filter(p -> p.getUser().getId()  == favoriteEvent.getUser().getId())
                 .forEach(p -> {
                     p.onFavoriteEvent(favoriteEvent);
-                    updateMessage(p);
+                    updateInteraction(p);
                 });
     }
 
@@ -246,11 +220,21 @@ public class PostMessageCache {
                 .filter(historyMessage -> historyEvent.getChannel().getId() == historyMessage.getTextChannel().getId())
                 .forEach(p -> {
                     p.onHistoryEvent(historyEvent);
-                    updateMessage(p);
+                    updateInteraction(p);
                 });
     }
 
-    private void updateMessage(PostMessage postMessage) {
+    private void updateInteraction(MessageComponentInteraction interaction, PostMessage postMessage) {
+        PostMessageable postMessageable = postMessage.toPostMessageable();
+
+        interaction.createOriginalMessageUpdater()
+                .setContent(postMessageable.content())
+                .addEmbed(postMessageable.embed())
+                .addComponents(PostMessageButtons.actionRows())
+                .update().join();
+    }
+
+    private void updateInteraction(PostMessage postMessage) {
         PostFetchResult postFetchResult = postMessage.getCurrentPost();
 
         Optional<Long> messageId = postMessageMap.entrySet().stream()
@@ -275,17 +259,8 @@ public class PostMessageCache {
             return;
         }
 
-        PostEmbedOptions postEmbedOptions = PostEmbedOptions.builder()
-                .post(postFetchResult.post())
-                .title(postMessage.getTitle())
-                .page(postMessage.getPage())
-                .count(postMessage.getCount())
-                .post(postFetchResult.post())
-                .build();
+        PostMessageable postMessageable = postMessage.toPostMessageable();
 
-        EmbedBuilder postEmbed = embedService.createPostEmbed(postEmbedOptions);
-        PostMessageable postMessageable = PostMessageable.fromPost(postEmbedOptions, postEmbed);
-
-        message.edit(postMessageable.content(), postEmbed);
+        message.edit(postMessageable.content(), postMessageable.embed());
     }
 }
