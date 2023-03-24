@@ -11,7 +11,6 @@ import nsfw.post.history.HistoryMessage;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageFlag;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -32,8 +30,6 @@ public class PostMessageCache {
     private final DiscordApi discordApi;
 
     private final FavoritesService favoritesService;
-
-    private final EmbedService embedService;
 
     private static final Map<Long, PostMessage> postMessageMap = new ConcurrentHashMap<>();
 
@@ -47,26 +43,14 @@ public class PostMessageCache {
             return;
         }
 
-        Message message;
-        PostFetchResult postFetchResult = postMessage.getCurrentPost();
+        PostMessageable postMessageable = postMessage.toPostMessageable();
 
-        if (postFetchResult.isError()) {
-            EmbedBuilder postEmbed = embedService.createErrorEmbed(postFetchResult.message());
-            message = event.getSlashCommandInteraction().createImmediateResponder()
-                    .addEmbed(postEmbed)
-                    .addComponents(PostMessageButtons.actionRows())
-                    .respond().join()
-                    .update().join();
-        } else {
-            PostMessageable postMessageable = postMessage.toPostMessageable();
-
-            message = event.getSlashCommandInteraction().createImmediateResponder()
-                    .addEmbed(postMessageable.embed())
-                    .setContent(postMessageable.content())
-                    .addComponents(PostMessageButtons.actionRows())
-                    .respond().join()
-                    .update().join();
-        }
+        Message message = event.getSlashCommandInteraction().createImmediateResponder()
+                .addEmbed(postMessageable.embed())
+                .setContent(postMessageable.content())
+                .addComponents(PostMessageButtons.actionRows())
+                .respond().join()
+                .update().join();
 
         postMessageMap.put(message.getId(), postMessage);
     }
@@ -76,7 +60,7 @@ public class PostMessageCache {
         PostMessage postMessage = postMessageMap.get(messageId);
 
         postMessage.nextPage();
-        updatePost(postMessage, event.getMessageComponentInteraction());
+        updateInteraction(event.getMessageComponentInteraction(), postMessage);
     }
 
     public void previousPage(MessageComponentCreateEvent event) {
@@ -84,7 +68,7 @@ public class PostMessageCache {
         PostMessage postMessage = postMessageMap.get(messageId);
 
         postMessage.previousPage();
-        updatePost(postMessage, event.getMessageComponentInteraction());
+        updateInteraction(event.getMessageComponentInteraction(), postMessage);
     }
 
     public void randomPage(MessageComponentCreateEvent event) {
@@ -92,7 +76,7 @@ public class PostMessageCache {
         PostMessage postMessage = postMessageMap.get(messageId);
         postMessage.randomPage();
 
-        updatePost(postMessage, event.getMessageComponentInteraction());
+        updateInteraction(event.getMessageComponentInteraction(), postMessage);
     }
 
     public void handleInteraction(MessageComponentCreateEvent event) {
@@ -185,21 +169,6 @@ public class PostMessageCache {
         }
     }
 
-    public void updatePost(PostMessage postMessage, MessageComponentInteraction interactionBase) {
-        PostFetchResult postFetchResult = postMessage.getCurrentPost();
-
-        if (postFetchResult.isError()) {
-            interactionBase.createOriginalMessageUpdater()
-                    .removeAllEmbeds()
-                    .addComponents(PostMessageButtons.actionRows())
-                    .addEmbed(embedService.createErrorEmbed(postFetchResult.message()))
-                    .update().join();
-            return;
-        }
-
-        updateInteraction(interactionBase, postMessage);
-    }
-
     @EventListener
     public void onApplicationEvent(FavoriteEvent favoriteEvent) {
         postMessageMap.values().stream()
@@ -235,32 +204,13 @@ public class PostMessageCache {
     }
 
     private void updateInteraction(PostMessage postMessage) {
-        PostFetchResult postFetchResult = postMessage.getCurrentPost();
-
-        Optional<Long> messageId = postMessageMap.entrySet().stream()
-                .filter(entry -> entry.getValue().getUuid().equals(postMessage.getUuid()))
-                .map(Map.Entry::getKey)
-                .findFirst();
-
-        if (messageId.isEmpty()) {
-            return;
-        }
-
-        Optional<Message> optionalMessage = discordApi.getCachedMessageById(messageId.get());
-
-        if (optionalMessage.isEmpty()) {
-            return;
-        }
-
-        Message message = optionalMessage.get();
-
-        if (postFetchResult.isError()) {
-            message.edit(postFetchResult.message(), embedService.createErrorEmbed("No posts present.")).join();
-            return;
-        }
-
-        PostMessageable postMessageable = postMessage.toPostMessageable();
-
-        message.edit(postMessageable.content(), postMessageable.embed());
+        postMessageMap.keySet().stream()
+                .filter(key -> postMessageMap.get(key).getUuid().equals(postMessage.getUuid()))
+                .findFirst()
+                .flatMap(discordApi::getCachedMessageById)
+                .ifPresent(message -> {
+                    PostMessageable postMessageable = postMessage.toPostMessageable();
+                    message.edit(postMessageable.content(), postMessageable.embed());
+                });
     }
 }

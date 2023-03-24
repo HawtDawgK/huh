@@ -64,4 +64,5 @@ public abstract class PostMessage {
 
         return postmessageableService.fromPost(postEmbedOptions);
     }
+
 }
