@@ -2,7 +2,6 @@ package nsfw.post;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.embed.EmbedService;
 import nsfw.post.favorites.FavoriteEvent;
 import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
@@ -120,13 +119,12 @@ public class PostMessageCache {
 
         event.getMessageComponentInteraction().createImmediateResponder()
                 .setContent(message)
-                .addComponents(PostMessageButtons.actionRows())
                 .setFlags(MessageFlag.EPHEMERAL)
                 .respond().join();
     }
 
     private void removeFavorite(MessageComponentCreateEvent event) {
-        long messageId = event.getMessageComponentInteraction().getId();
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
         PostMessage postMessage = postMessageMap.get(messageId);
 
         User reactingUser = event.getInteraction().getUser();
@@ -145,28 +143,15 @@ public class PostMessageCache {
 
         event.getMessageComponentInteraction().createImmediateResponder()
                 .setContent(message)
-                .addComponents(PostMessageButtons.actionRows())
                 .setFlags(MessageFlag.EPHEMERAL)
                 .respond().join();
     }
 
     private void deleteMessage(MessageComponentCreateEvent event) {
-        long messageId = event.getMessageComponentInteraction().getMessage().getId();
+        Message message = event.getMessageComponentInteraction().getMessage();
 
-        User reactingUser = event.getInteraction().getUser();
-        User author = event.getInteraction().getUser();
-
-        // Only author can delete the message
-        if (reactingUser.equals(author)) {
-            event.getMessageComponentInteraction().getMessage().delete().join();
-            postMessageMap.remove(messageId);
-        } else {
-            event.getMessageComponentInteraction().createImmediateResponder()
-                    .setContent("Only the author can delete this message")
-                    .addComponents(PostMessageButtons.actionRows())
-                    .setFlags(MessageFlag.EPHEMERAL)
-                    .respond().join();
-        }
+        event.getMessageComponentInteraction().getMessage().delete().join();
+        postMessageMap.remove(message.getId());
     }
 
     @EventListener
@@ -174,7 +159,7 @@ public class PostMessageCache {
         postMessageMap.values().stream()
                 .filter(FavoritesMessage.class::isInstance)
                 .map(FavoritesMessage.class::cast)
-                .filter(p -> p.getUser().getId()  == favoriteEvent.getUser().getId())
+                .filter(p -> p.getUser().getId() == favoriteEvent.getUser().getId())
                 .forEach(p -> {
                     p.onFavoriteEvent(favoriteEvent);
                     updateInteraction(p);
