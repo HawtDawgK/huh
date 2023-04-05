@@ -9,20 +9,8 @@ import nsfw.post.api.PostFetchOptions;
 import nsfw.post.autocomplete.AutocompleteResultImpl;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Optional;
-
 @Slf4j
 public abstract class GenericPostApi implements PostApi {
-
-    @Override
-    public Optional<Integer> getMaxCount() {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<Integer> getMaxTags() {
-        return Optional.empty();
-    }
 
     @Override
     public String getAutocompleteUrl(String tags) {
