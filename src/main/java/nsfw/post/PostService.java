@@ -38,7 +38,11 @@ public class PostService {
     public PostFetchResult fetchPost(@Nullable TextChannel textChannel, PostFetchOptions options) {
         try {
             if (options.getId() != null) {
-                return fetchFromCache(options);
+                PostFetchResult cachedResult = fetchFromCache(options);
+
+                if (cachedResult.post() != null) {
+                    return cachedResult;
+                }
             }
 
             PostApi postApi = options.getPostSite().getPostApi();
