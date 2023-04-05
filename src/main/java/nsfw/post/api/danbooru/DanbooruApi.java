@@ -3,7 +3,7 @@ package nsfw.post.api.danbooru;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.api.*;
+import nsfw.post.api.PostFetchOptions;
 import nsfw.post.api.generic.GenericPostApi;
 import org.springframework.web.util.UriComponentsBuilder;
 

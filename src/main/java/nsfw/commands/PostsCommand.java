@@ -4,8 +4,12 @@ import lombok.RequiredArgsConstructor;
 import nsfw.enums.PostSite;
 import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
-import org.javacord.api.interaction.*;
 import nsfw.post.PostMessageFactory;
+import org.javacord.api.interaction.SlashCommand;
+import org.javacord.api.interaction.SlashCommandBuilder;
+import org.javacord.api.interaction.SlashCommandInteractionOption;
+import org.javacord.api.interaction.SlashCommandOptionBuilder;
+import org.javacord.api.interaction.SlashCommandOptionType;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;

@@ -14,7 +14,11 @@ import org.javacord.api.interaction.SlashCommandInteractionOption;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -79,13 +83,13 @@ public class CommandHandler {
     public void checkNsfwChannel(SlashCommandInteraction interaction) throws CommandException {
         Optional<TextChannel> channel = interaction.getChannel();
 
-        if (channel.isPresent() && channel.get() instanceof ServerTextChannel serverTextChannel) {
-            if (!serverTextChannel.isNsfw()) {
-                throw new CommandException("This command can only be used in NSFW channels.");
-            }
-        } else {
+        if (channel.isEmpty() || !(channel.get() instanceof ServerTextChannel serverTextChannel)) {
             log.error("Received ChatInputInteractionEvent for non-text channel {}", channel);
             throw new CommandException("Could not find text channel.");
+        }
+
+        if (!serverTextChannel.isNsfw()) {
+            throw new CommandException("This command can only be used in NSFW channels.");
         }
     }
 }

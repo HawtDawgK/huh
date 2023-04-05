@@ -7,8 +7,7 @@ import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
-import java.time.Instant;
+import java.awt.Color;
 
 @Slf4j
 @Service
@@ -25,31 +24,29 @@ public class EmbedService {
     }
 
     public EmbedBuilder createPostEmbed(PostEmbedOptions options) {
-        EmbedBuilder embedBuilder = new EmbedBuilder();
+        int displayPage = options.getPage() + 1;
+        int count = options.getCount();
+        long score = options.getPostFetchResult().post().getScore();
 
-        embedBuilder.setTitle(options.getTitle());
-        embedBuilder.setDescription(options.getDescription());
-        embedBuilder.setTimestamp(options.getPostFetchResult().post().getCreatedAt().toInstant());
-        embedBuilder.setImage(options.getPostFetchResult().post().getFileUrl());
+        String footer = "Page %d of %d • Score: %d".formatted(displayPage, count, score);
 
-        String footer = String.format("Page %d of %d • Score: %d",
-                options.getPage() + 1, options.getCount(), options.getPostFetchResult().post().getScore());
-        embedBuilder.setFooter(footer);
-
-        return embedBuilder;
+        return new EmbedBuilder()
+                .setTitle(options.getTitle())
+                .setDescription(options.getDescription())
+                .setTimestamp(options.getPostFetchResult().post().getCreatedAt().toInstant())
+                .setImage(options.getPostFetchResult().post().getFileUrl())
+                .setFooter(footer);
     }
 
     public EmbedBuilder createErrorEmbed(String message) {
-        EmbedBuilder embedCreateSpec = new EmbedBuilder()
+        User self = discordApi.getYourself();
+
+        return new EmbedBuilder()
                 .setTitle("Error")
                 .setDescription(message)
                 .setColor(Color.RED)
-                .setTimestamp(Instant.now());
-
-        User self = discordApi.getYourself();
-        embedCreateSpec.setFooter(self.getName(), self.getAvatar());
-
-        return embedCreateSpec;
+                .setTimestampToNow()
+                .setFooter(self.getName(), self.getAvatar());
     }
 
 }
