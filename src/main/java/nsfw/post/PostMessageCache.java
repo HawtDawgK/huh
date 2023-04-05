@@ -47,7 +47,7 @@ public class PostMessageCache {
         Message message = event.getSlashCommandInteraction().createImmediateResponder()
                 .addEmbed(postMessageable.embed())
                 .setContent(postMessageable.content())
-                .addComponents(PostMessageButtons.actionRows())
+                .addComponents(PostMessageButtons.actionRows(postMessage.getCurrentPost().isError()))
                 .respond().join()
                 .update().join();
 
@@ -184,7 +184,7 @@ public class PostMessageCache {
         interaction.createOriginalMessageUpdater()
                 .setContent(postMessageable.content())
                 .addEmbed(postMessageable.embed())
-                .addComponents(PostMessageButtons.actionRows())
+                .addComponents(PostMessageButtons.actionRows(postMessage.getCurrentPost().isError()))
                 .update().join();
     }
 
