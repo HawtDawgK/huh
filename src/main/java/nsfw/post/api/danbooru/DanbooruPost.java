@@ -13,10 +13,16 @@ import java.util.Date;
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonNaming(PropertyNamingStrategies.KebabCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class DanbooruPost extends GenericPost {
 
     @JsonDeserialize
     private Date createdAt;
 
+    private String tagString;
+
+    @Override
+    public String getTags() {
+        return tagString;
+    }
 }

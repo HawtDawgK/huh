@@ -56,4 +56,13 @@ public class DanbooruApi extends GenericPostApi {
         return TypeFactory.defaultInstance().constructType(DanbooruAutocompleteResult.class);
     }
 
+    @Override
+    public JavaType getCountsResultType() {
+        return TypeFactory.defaultInstance().constructType(DanbooruCountsResponse.class);
+    }
+
+    @Override
+    public JavaType getPostQueryResultType() {
+        return TypeFactory.defaultInstance().constructType(DanbooruPostQueryResult.class);
+    }
 }
