@@ -1,12 +1,11 @@
 package nsfw.post.api.danbooru;
 
-import nsfw.post.Post;
 import nsfw.post.api.PostQueryResult;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DanbooruPostQueryResult extends ArrayList<DanbooruPost> implements PostQueryResult {
+public class DanbooruPostQueryResult extends ArrayList<DanbooruPost> implements PostQueryResult<DanbooruPost> {
 
     @Override
     public int getCount() {
@@ -14,7 +13,7 @@ public class DanbooruPostQueryResult extends ArrayList<DanbooruPost> implements 
     }
 
     @Override
-    public List<Post> getPosts() {
+    public List<DanbooruPost> getPosts() {
         return new ArrayList<>(this);
     }
 }

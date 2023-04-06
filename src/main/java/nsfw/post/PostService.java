@@ -66,7 +66,7 @@ public class PostService {
                 return new PostFetchResult(null, true, "Could not find any posts.");
             }
 
-            Post post = postQueryResult.getPosts().get(0);
+            Post post = (Post) postQueryResult.getPosts().get(0);
             post.setPostSite(options.getPostSite());
 
             List<String> disallowedTags = TagUtil.getDisallowedTags(post.getTags());
@@ -118,6 +118,10 @@ public class PostService {
     }
 
     private PostFetchResult fetchFromCache(PostFetchOptions options) {
+        if (options.getId() == null) {
+            return new PostFetchResult(null, false, "");
+        }
+
         PostEntity postEntity = new PostEntity();
         postEntity.setPostId(options.getId());
         postEntity.setSite(options.getPostSite());

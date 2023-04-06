@@ -19,6 +19,16 @@ public class YandereApi extends GenericPostApi  {
     }
 
     @Override
+    public JavaType getPostQueryResultType() {
+        return TypeFactory.defaultInstance().constructType(YanderePostQueryResult.class);
+    }
+
+    @Override
+    public JavaType getCountsResultType() {
+        return getPostQueryResultType();
+    }
+
+    @Override
     public String getAutocompleteUrl(String tags) {
         return UriComponentsBuilder.fromUriString(getBaseUrl())
                 .path("tag.xml")

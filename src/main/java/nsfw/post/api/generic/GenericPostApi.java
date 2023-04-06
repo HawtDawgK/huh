@@ -3,7 +3,6 @@ package nsfw.post.api.generic;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.extern.slf4j.Slf4j;
-import nsfw.post.PostQueryResultImpl;
 import nsfw.post.api.PostApi;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.autocomplete.AutocompleteResultImpl;
@@ -19,12 +18,13 @@ public abstract class GenericPostApi implements PostApi {
 
     @Override
     public JavaType getCountsResultType() {
-        return TypeFactory.defaultInstance().constructType(PostQueryResultImpl.class);
+        return getPostQueryResultType();
     }
 
     @Override
     public JavaType getPostQueryResultType() {
-        return TypeFactory.defaultInstance().constructType(PostQueryResultImpl.class);
+        return TypeFactory.defaultInstance()
+                .constructParametricType(GenericPostQueryResult.class, GenericPost.class);
     }
 
     @Override
