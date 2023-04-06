@@ -18,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "posts")
-public class GenericPostQueryResult<P extends Post> implements PostQueryResult {
+public class GenericPostQueryResult<P extends Post> implements PostQueryResult<P> {
 
     private int count;
 
@@ -28,7 +28,7 @@ public class GenericPostQueryResult<P extends Post> implements PostQueryResult {
     @JacksonXmlProperty(localName = "post", isAttribute = true)
     private final List<P> posts = new ArrayList<>();
 
-    public List<Post> getPosts() {
+    public List<P> getPosts() {
         return new ArrayList<>(posts);
     }
 }
