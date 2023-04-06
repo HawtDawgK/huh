@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nsfw.db.PostEntity;
 import nsfw.post.PostFetchResult;
 import nsfw.post.PostService;
-import nsfw.post.PostmessageableService;
+import nsfw.post.messageable.PostmessageableService;
 import nsfw.post.list.PostListMessage;
 import org.javacord.api.entity.channel.TextChannel;
 

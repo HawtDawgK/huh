@@ -6,6 +6,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.embed.PostEmbedOptions;
 import nsfw.post.api.PostFetchOptions;
+import nsfw.post.messageable.PostMessageable;
+import nsfw.post.messageable.PostmessageableService;
 
 import java.util.Random;
 import java.util.UUID;

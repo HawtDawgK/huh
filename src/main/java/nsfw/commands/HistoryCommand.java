@@ -5,7 +5,7 @@ import nsfw.db.PostEntity;
 import nsfw.post.PostMessage;
 import nsfw.post.PostMessageCache;
 import nsfw.post.PostService;
-import nsfw.post.PostmessageableService;
+import nsfw.post.messageable.PostmessageableService;
 import nsfw.post.history.HistoryMessage;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;

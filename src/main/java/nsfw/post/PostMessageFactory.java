@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nsfw.commands.CommandException;
 import nsfw.enums.PostSite;
 import nsfw.post.api.PostFetchOptions;
+import nsfw.post.messageable.PostmessageableService;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.springframework.stereotype.Component;

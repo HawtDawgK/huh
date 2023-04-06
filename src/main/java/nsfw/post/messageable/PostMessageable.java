@@ -1,4 +1,4 @@
-package nsfw.post;
+package nsfw.post.messageable;
 
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.springframework.lang.NonNull;

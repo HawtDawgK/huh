@@ -1,4 +1,4 @@
-package nsfw.post;
+package nsfw.post.messageable;
 
 import lombok.RequiredArgsConstructor;
 import nsfw.embed.EmbedService;

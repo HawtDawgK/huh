@@ -5,7 +5,7 @@ import nsfw.db.PostEntity;
 import nsfw.post.PostMessage;
 import nsfw.post.PostMessageCache;
 import nsfw.post.PostService;
-import nsfw.post.PostmessageableService;
+import nsfw.post.messageable.PostmessageableService;
 import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
 import org.javacord.api.entity.user.User;

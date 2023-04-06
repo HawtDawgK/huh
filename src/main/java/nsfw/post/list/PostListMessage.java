@@ -4,7 +4,7 @@ import lombok.Getter;
 import nsfw.db.PostEntity;
 import nsfw.post.PostMessage;
 import nsfw.post.PostService;
-import nsfw.post.PostmessageableService;
+import nsfw.post.messageable.PostmessageableService;
 import nsfw.post.api.PostFetchOptions;
 
 import java.util.List;

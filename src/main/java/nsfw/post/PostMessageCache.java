@@ -7,6 +7,7 @@ import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
 import nsfw.post.history.HistoryEvent;
 import nsfw.post.history.HistoryMessage;
+import nsfw.post.messageable.PostMessageable;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageFlag;
