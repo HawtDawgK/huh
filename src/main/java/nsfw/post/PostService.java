@@ -54,7 +54,7 @@ public class PostService {
                 return new PostFetchResult(null, true, "Error fetching post");
             }
 
-            PostQueryResult postQueryResult;
+            PostQueryResult<Post> postQueryResult;
 
             if (postApi.isJson()) {
                 postQueryResult = objectMapper.readValue(responseEntity.getBody(), postApi.getPostQueryResultType());
@@ -66,7 +66,7 @@ public class PostService {
                 return new PostFetchResult(null, true, "Could not find any posts.");
             }
 
-            Post post = (Post) postQueryResult.getPosts().get(0);
+            Post post = postQueryResult.getPosts().get(0);
             post.setPostSite(options.getPostSite());
 
             List<String> disallowedTags = TagUtil.getDisallowedTags(post.getTags());
