@@ -13,6 +13,7 @@ import nsfw.post.api.yandere.YandereApi;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Getter
 @RequiredArgsConstructor
@@ -39,4 +40,9 @@ public enum PostSite {
                 .orElseThrow(() -> new RuntimeException("Received invalid site " + name));
     }
 
+    public static List<SlashCommandOptionChoice> slashCommandOptionChoices() {
+        return Arrays.stream(values())
+                .map(PostSite::toSlashCommandOptionChoice)
+                .toList();
+    }
 }

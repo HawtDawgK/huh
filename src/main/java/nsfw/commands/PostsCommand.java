@@ -12,8 +12,6 @@ import org.javacord.api.interaction.SlashCommandOptionBuilder;
 import org.javacord.api.interaction.SlashCommandOptionType;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,7 +27,7 @@ public class PostsCommand implements Command {
                         .setDescription("Site to search posts for")
                         .setRequired(true)
                         .setType(SlashCommandOptionType.STRING)
-                        .setChoices(Arrays.stream(PostSite.values()).map(PostSite::toSlashCommandOptionChoice).toList())
+                        .setChoices(PostSite.slashCommandOptionChoices())
                         .build())
                 .addOption(new SlashCommandOptionBuilder()
                         .setName("tags")
