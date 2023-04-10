@@ -72,21 +72,23 @@ public class PostService {
                 return new PostFetchResult(null, true, errorMessage);
             }
 
-            PostEntity postEntityKey = new PostEntity();
-            postEntityKey.setSite(post.getPostSite());
-            postEntityKey.setPostId(post.getId());
-
             if (textChannel != null) {
-                eventPublisher.publishEvent(new HistoryEvent(postEntityKey, textChannel));
+                createHistoryEvent(post, textChannel);
             }
-
-            post.setPostSite(options.getPostSite());
 
             postCache.put(post);
             return new PostFetchResult(post, false, null);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void createHistoryEvent(Post post, TextChannel textChannel) {
+        PostEntity postEntityKey = new PostEntity();
+        postEntityKey.setSite(post.getPostSite());
+        postEntityKey.setPostId(post.getId());
+
+        eventPublisher.publishEvent(new HistoryEvent(postEntityKey, textChannel));
     }
 
     public int fetchCount(PostFetchOptions options) {
