@@ -39,7 +39,7 @@ public class DanbooruApi extends GenericPostApi {
         if (options.isCounts()) {
            uriComponentsBuilder.path("counts/posts.json");
         } else if (options.getId() != null) {
-            uriComponentsBuilder.path(options.getId() + ".json");
+            uriComponentsBuilder.path("posts/" + options.getId() + ".json");
         } else {
             uriComponentsBuilder.path("posts.json");
         }
@@ -65,4 +65,6 @@ public class DanbooruApi extends GenericPostApi {
     public JavaType getPostQueryResultType() {
         return TypeFactory.defaultInstance().constructType(DanbooruPostQueryResult.class);
     }
+
+
 }

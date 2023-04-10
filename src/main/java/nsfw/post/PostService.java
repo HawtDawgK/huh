@@ -37,17 +37,14 @@ public class PostService {
 
     public PostFetchResult fetchPost(@Nullable TextChannel textChannel, PostFetchOptions options) {
         try {
-            if (options.getId() != null) {
-                PostFetchResult cachedResult = fetchFromCache(options);
-
-                if (cachedResult.post() != null) {
-                    return cachedResult;
-                }
+            if (isInCache(options)) {
+                return fetchFromCache(options);
             }
 
             PostApi postApi = options.getPostSite().getPostApi();
 
-            ResponseEntity<String> responseEntity = webClient.get().uri(postApi.getUrl(options))
+            ResponseEntity<String> responseEntity = webClient.get()
+                    .uri(postApi.getUrl(options))
                     .retrieve().toEntity(String.class).block();
 
             if (responseEntity == null || responseEntity.getStatusCode().isError()) {
@@ -128,5 +125,16 @@ public class PostService {
         Post post = postCache.get(postEntity);
 
         return new PostFetchResult(post, false, "");
+    }
+
+    public boolean isInCache(PostFetchOptions options) {
+        if (options.getId() == null) {
+            return false;
+        }
+
+        PostEntity postEntity = new PostEntity();
+        postEntity.setPostId(options.getId());
+        postEntity.setSite(options.getPostSite());
+        return postCache.hasPost(postEntity);
     }
 }

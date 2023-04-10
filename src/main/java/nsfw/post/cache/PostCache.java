@@ -24,4 +24,8 @@ public class PostCache {
     public @Nullable Post get(PostEntity postEntity) {
         return POST_CACHE.get(postEntity);
     }
+
+    public boolean hasPost(PostEntity postEntity) {
+        return POST_CACHE.containsKey(postEntity);
+    }
 }
