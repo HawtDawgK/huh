@@ -6,5 +6,4 @@ import org.springframework.lang.Nullable;
 
 public record PostMessageable(@NonNull String content, @Nullable EmbedBuilder embed) {
 
-
 }
