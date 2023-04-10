@@ -7,6 +7,7 @@ Sites supported
 - danbooru
 - gelbooru
 - xbooru
+- hypnohub
 - the big imageboard
 - yande.re
 
