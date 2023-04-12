@@ -7,7 +7,6 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import nsfw.post.Post;
 import nsfw.post.api.PostQueryResult;
 
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "posts")
-public class GenericPostQueryResult<P extends Post> implements PostQueryResult<P> {
+public class GenericPostQueryResult implements PostQueryResult<GenericPost> {
 
     private int count;
 
@@ -26,9 +25,9 @@ public class GenericPostQueryResult<P extends Post> implements PostQueryResult<P
 
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "post", isAttribute = true)
-    private final List<P> posts = new ArrayList<>();
+    private final List<GenericPost> posts = new ArrayList<>();
 
-    public List<P> getPosts() {
+    public List<GenericPost> getPosts() {
         return new ArrayList<>(posts);
     }
 }

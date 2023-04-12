@@ -1,10 +1,13 @@
 package nsfw.post.api.generic;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.post.api.PostApi;
 import nsfw.post.api.PostFetchOptions;
+import nsfw.post.api.PostQueryResult;
 import nsfw.post.autocomplete.AutocompleteResultImpl;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -17,24 +20,39 @@ public abstract class GenericPostApi implements PostApi {
     }
 
     @Override
+    public JavaType getAutocompleteResultType() {
+        return TypeFactory.defaultInstance().constructType(AutocompleteResultImpl.class);
+    }
+
+    @Override
     public JavaType getCountsResultType() {
         return getPostQueryResultType();
     }
 
     @Override
     public JavaType getPostQueryResultType() {
-        return TypeFactory.defaultInstance()
-                .constructParametricType(GenericPostQueryResult.class, GenericPost.class);
+        return TypeFactory.defaultInstance().constructType(GenericPostQueryResult.class);
     }
 
     @Override
-    public JavaType getAutocompleteResultType() {
-        return TypeFactory.defaultInstance().constructType(AutocompleteResultImpl.class);
+    public PostQueryResult<? extends GenericPost> parsePostFetchResponse(PostFetchOptions options, String responseBody) {
+        try {
+            return new XmlMapper().readValue(responseBody, getPostQueryResultType());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public boolean isJson() {
-        return false;
+    public int parseCount(String responseBody) {
+        try {
+            XmlMapper xmlMapper = new XmlMapper();
+
+            PostQueryResult<GenericPost> countResult = xmlMapper.readValue(responseBody, getCountsResultType());
+            return countResult.getCount();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

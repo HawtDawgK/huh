@@ -1,11 +1,7 @@
 package nsfw.post;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import nsfw.db.PostEntity;
-import nsfw.post.api.CountResult;
 import nsfw.post.api.PostApi;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.api.PostQueryResult;
@@ -29,58 +25,44 @@ public class PostService {
 
     private final WebClient webClient;
 
-    private final ObjectMapper objectMapper;
-
-    private final XmlMapper xmlMapper;
-
     private final ApplicationEventPublisher eventPublisher;
 
     public PostFetchResult fetchPost(@Nullable TextChannel textChannel, PostFetchOptions options) {
-        try {
-            if (isInCache(options)) {
-                return fetchFromCache(options);
-            }
-
-            PostApi postApi = options.getPostSite().getPostApi();
-
-            ResponseEntity<String> responseEntity = webClient.get()
-                    .uri(postApi.getUrl(options))
-                    .retrieve().toEntity(String.class).block();
-
-            if (responseEntity == null || responseEntity.getStatusCode().isError()) {
-                return new PostFetchResult(null, true, "Error fetching post");
-            }
-
-            PostQueryResult<Post> postQueryResult;
-
-            if (postApi.isJson()) {
-                postQueryResult = objectMapper.readValue(responseEntity.getBody(), postApi.getPostQueryResultType());
-            } else {
-                postQueryResult = xmlMapper.readValue(responseEntity.getBody(), postApi.getPostQueryResultType());
-            }
-
-            if (postQueryResult.getPosts().isEmpty()) {
-                return new PostFetchResult(null, true, "Could not find any posts.");
-            }
-
-            Post post = postQueryResult.getPosts().get(0);
-            post.setPostSite(options.getPostSite());
-
-            List<String> disallowedTags = TagUtil.getDisallowedTags(post.getTags());
-            if (!disallowedTags.isEmpty()) {
-                String errorMessage = "Post contains disallowed tags: " + String.join(",", disallowedTags);
-                return new PostFetchResult(null, true, errorMessage);
-            }
-
-            if (textChannel != null) {
-                createHistoryEvent(post, textChannel);
-            }
-
-            postCache.put(post);
-            return new PostFetchResult(post, false, null);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        if (isInCache(options)) {
+            return fetchFromCache(options);
         }
+
+        PostApi postApi = options.getPostSite().getPostApi();
+
+        ResponseEntity<String> responseEntity = webClient.get()
+                .uri(postApi.getUrl(options))
+                .retrieve().toEntity(String.class).block();
+
+        if (responseEntity == null || responseEntity.getStatusCode().isError()) {
+            return new PostFetchResult(null, true, "Error fetching post");
+        }
+
+        PostQueryResult<? extends Post> postQueryResult = postApi.parsePostFetchResponse(options, responseEntity.getBody());
+
+        if (postQueryResult.getPosts().isEmpty()) {
+            return new PostFetchResult(null, true, "Could not find any posts.");
+        }
+
+        Post post = postQueryResult.getPosts().get(0);
+        post.setPostSite(options.getPostSite());
+
+        List<String> disallowedTags = TagUtil.getDisallowedTags(post.getTags());
+        if (!disallowedTags.isEmpty()) {
+            String errorMessage = "Post contains disallowed tags: " + String.join(",", disallowedTags);
+            return new PostFetchResult(null, true, errorMessage);
+        }
+
+        if (textChannel != null) {
+            createHistoryEvent(post, textChannel);
+        }
+
+        postCache.put(post);
+        return new PostFetchResult(post, false, null);
     }
 
     private void createHistoryEvent(Post post, TextChannel textChannel) {
@@ -92,28 +74,17 @@ public class PostService {
     }
 
     public int fetchCount(PostFetchOptions options) {
-        try {
-            PostApi postApi = options.getPostSite().getPostApi();
-            String url = postApi.getUrl(options);
+        PostApi postApi = options.getPostSite().getPostApi();
+        String url = postApi.getUrl(options);
 
-            ResponseEntity<String> responseEntity = webClient.get().uri(url)
-                    .retrieve().toEntity(String.class).block();
+        ResponseEntity<String> responseEntity = webClient.get().uri(url)
+                .retrieve().toEntity(String.class).block();
 
-            if (responseEntity == null || responseEntity.getStatusCode().isError()) {
-                return 0;
-            }
-
-            CountResult countResult;
-            if (postApi.isJson()) {
-                countResult = objectMapper.readValue(responseEntity.getBody(), postApi.getCountsResultType());
-            } else {
-                countResult = xmlMapper.readValue(responseEntity.getBody(), postApi.getCountsResultType());
-            }
-            return countResult.getCount();
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        if (responseEntity == null || responseEntity.getStatusCode().isError()) {
             return 0;
         }
+
+        return postApi.parseCount(responseEntity.getBody());
     }
 
     private PostFetchResult fetchFromCache(PostFetchOptions options) {

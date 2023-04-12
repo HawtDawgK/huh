@@ -2,6 +2,7 @@ package nsfw.post.api;
 
 import com.fasterxml.jackson.databind.JavaType;
 import nsfw.commands.CommandException;
+import nsfw.post.Post;
 
 import java.util.Optional;
 
@@ -26,7 +27,9 @@ public interface PostApi {
         return Optional.empty();
     }
 
-    boolean isJson();
+    PostQueryResult<? extends Post> parsePostFetchResponse(PostFetchOptions options, String responseBody);
+
+    int parseCount(String responseBody);
 
     JavaType getPostQueryResultType();
 
