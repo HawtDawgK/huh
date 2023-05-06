@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import nsfw.enums.PostSite;
 
-
 import java.io.Serializable;
 
 @Data
