@@ -24,8 +24,8 @@ public class EmbedService {
     }
 
     public EmbedBuilder createPostEmbed(PostEmbedOptions options) {
-        int displayPage = options.getPage() + 1;
-        int count = options.getCount();
+        long displayPage = options.getPage() + 1;
+        long count = options.getCount();
         long score = options.getPostFetchResult().post().getScore();
 
         String footer = "Page %d of %d • Score: %d".formatted(displayPage, count, score);

@@ -2,9 +2,9 @@ package nsfw.commands;
 
 import lombok.RequiredArgsConstructor;
 import nsfw.db.PostEntity;
-import nsfw.post.PostMessage;
-import nsfw.post.PostMessageCache;
+import nsfw.post.message.PostMessage;
 import nsfw.post.PostService;
+import nsfw.post.message.PostMessageService;
 import nsfw.post.messageable.PostmessageableService;
 import nsfw.post.history.HistoryMessage;
 import org.javacord.api.entity.channel.TextChannel;
@@ -22,11 +22,11 @@ public class HistoryCommand implements Command {
 
     private final PostHistory postHistory;
 
-    private final PostMessageCache postMessageCache;
-
     private final PostService postService;
 
     private final PostmessageableService postmessageableService;
+
+    private final PostMessageService postMessageService;
 
     @Override
     public SlashCommandBuilder toSlashCommandBuilder() {
@@ -41,7 +41,7 @@ public class HistoryCommand implements Command {
 
         PostMessage postMessage = new HistoryMessage(postService, postmessageableService,
                 postHistoryFromChannel, messageChannel);
-        postMessageCache.addPost(event, postMessage);
+        postMessageService.addPost(event, postMessage);
     }
 
 }

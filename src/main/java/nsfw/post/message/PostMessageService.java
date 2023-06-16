@@ -1,7 +1,8 @@
-package nsfw.post;
+package nsfw.post.message;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nsfw.post.PostFetchResult;
 import nsfw.post.favorites.FavoriteEvent;
 import nsfw.post.favorites.FavoritesMessage;
 import nsfw.post.favorites.FavoritesService;
@@ -16,22 +17,20 @@ import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.MessageComponentInteraction;
 import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
-public class PostMessageCache {
+public class PostMessageService {
+
+    private final PostMessageCache postMessageCache;
 
     private final DiscordApi discordApi;
 
     private final FavoritesService favoritesService;
-
-    private static final Map<Long, PostMessage> postMessageMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void postConstruct() {
@@ -52,12 +51,31 @@ public class PostMessageCache {
                 .respond().join()
                 .update().join();
 
-        postMessageMap.put(message.getId(), postMessage);
+        postMessageCache.addPost(message.getId(), postMessage);
+    }
+
+    private void updateInteraction(MessageComponentInteraction interaction, PostMessage postMessage) {
+        PostMessageable postMessageable = postMessage.toPostMessageable();
+
+        interaction.createOriginalMessageUpdater()
+                .setContent(postMessageable.content())
+                .addEmbed(postMessageable.embed())
+                .addComponents(PostMessageButtons.actionRows(postMessage.getCurrentPost().isError()))
+                .update().join();
+    }
+
+    private void updateInteraction(PostMessage postMessage) {
+        postMessageCache.findByPostMessageUuid(postMessage)
+                .flatMap(discordApi::getCachedMessageById)
+                .ifPresent(message -> {
+                    PostMessageable postMessageable = postMessage.toPostMessageable();
+                    message.edit(postMessageable.content(), postMessageable.embed());
+                });
     }
 
     private void nextPage(MessageComponentCreateEvent event) {
         long messageId = event.getMessageComponentInteraction().getMessage().getId();
-        PostMessage postMessage = postMessageMap.get(messageId);
+        PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
 
         postMessage.nextPage();
         updateInteraction(event.getMessageComponentInteraction(), postMessage);
@@ -65,7 +83,7 @@ public class PostMessageCache {
 
     public void previousPage(MessageComponentCreateEvent event) {
         long messageId = event.getMessageComponentInteraction().getMessage().getId();
-        PostMessage postMessage = postMessageMap.get(messageId);
+        PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
 
         postMessage.previousPage();
         updateInteraction(event.getMessageComponentInteraction(), postMessage);
@@ -73,7 +91,7 @@ public class PostMessageCache {
 
     public void randomPage(MessageComponentCreateEvent event) {
         long messageId = event.getMessageComponentInteraction().getMessage().getId();
-        PostMessage postMessage = postMessageMap.get(messageId);
+        PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
         postMessage.randomPage();
 
         updateInteraction(event.getMessageComponentInteraction(), postMessage);
@@ -82,7 +100,7 @@ public class PostMessageCache {
     public void handleInteraction(MessageComponentCreateEvent event) {
         long messageId = event.getMessageComponentInteraction().getMessage().getId();
 
-        PostMessage postMessage = postMessageMap.get(messageId);
+        PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
 
         if (postMessage == null) {
             log.error("Received unknown interaction " + messageId);
@@ -103,7 +121,7 @@ public class PostMessageCache {
 
     private void addFavorite(MessageComponentCreateEvent event) {
         long messageId = event.getMessageComponentInteraction().getMessage().getId();
-        PostMessage postMessage = postMessageMap.get(messageId);
+        PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
 
         PostFetchResult postFetchResult = postMessage.getCurrentPost();
 
@@ -126,7 +144,7 @@ public class PostMessageCache {
 
     private void removeFavorite(MessageComponentCreateEvent event) {
         long messageId = event.getMessageComponentInteraction().getMessage().getId();
-        PostMessage postMessage = postMessageMap.get(messageId);
+        PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
 
         User reactingUser = event.getInteraction().getUser();
 
@@ -152,12 +170,12 @@ public class PostMessageCache {
         Message message = event.getMessageComponentInteraction().getMessage();
 
         event.getMessageComponentInteraction().getMessage().delete().join();
-        postMessageMap.remove(message.getId());
+        postMessageCache.getPostMessageMap().remove(message.getId());
     }
 
     @EventListener
     public void onApplicationEvent(FavoriteEvent favoriteEvent) {
-        postMessageMap.values().stream()
+        postMessageCache.getPostMessageMap().values().stream()
                 .filter(FavoritesMessage.class::isInstance)
                 .map(FavoritesMessage.class::cast)
                 .filter(p -> p.getUser().getId() == favoriteEvent.getUser().getId())
@@ -169,7 +187,7 @@ public class PostMessageCache {
 
     @EventListener
     public void onApplicationEvent(HistoryEvent historyEvent) {
-        postMessageMap.values().stream()
+        postMessageCache.getPostMessageMap().values().stream()
                 .filter(HistoryMessage.class::isInstance)
                 .map(HistoryMessage.class::cast)
                 .filter(historyMessage -> historyEvent.getChannel().getId() == historyMessage.getTextChannel().getId())
@@ -179,24 +197,4 @@ public class PostMessageCache {
                 });
     }
 
-    private void updateInteraction(MessageComponentInteraction interaction, PostMessage postMessage) {
-        PostMessageable postMessageable = postMessage.toPostMessageable();
-
-        interaction.createOriginalMessageUpdater()
-                .setContent(postMessageable.content())
-                .addEmbed(postMessageable.embed())
-                .addComponents(PostMessageButtons.actionRows(postMessage.getCurrentPost().isError()))
-                .update().join();
-    }
-
-    private void updateInteraction(PostMessage postMessage) {
-        postMessageMap.keySet().stream()
-                .filter(key -> postMessageMap.get(key).getUuid().equals(postMessage.getUuid()))
-                .findFirst()
-                .flatMap(discordApi::getCachedMessageById)
-                .ifPresent(message -> {
-                    PostMessageable postMessageable = postMessage.toPostMessageable();
-                    message.edit(postMessageable.content(), postMessageable.embed());
-                });
-    }
 }

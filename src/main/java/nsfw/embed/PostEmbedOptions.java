@@ -9,9 +9,9 @@ import org.springframework.lang.NonNull;
 @Builder
 public class PostEmbedOptions {
 
-    private final int page;
+    private final long page;
 
-    private final int count;
+    private final long count;
 
     private final String title;
 

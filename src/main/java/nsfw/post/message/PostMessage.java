@@ -1,10 +1,13 @@
-package nsfw.post;
+package nsfw.post.message;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.embed.PostEmbedOptions;
+import nsfw.post.Post;
+import nsfw.post.PostFetchResult;
+import nsfw.post.PostService;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.messageable.PostMessageable;
 import nsfw.post.messageable.PostmessageableService;

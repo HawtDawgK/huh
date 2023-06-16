@@ -2,7 +2,7 @@ package nsfw.post.list;
 
 import lombok.Getter;
 import nsfw.db.PostEntity;
-import nsfw.post.PostMessage;
+import nsfw.post.message.PostMessage;
 import nsfw.post.PostService;
 import nsfw.post.messageable.PostmessageableService;
 import nsfw.post.api.PostFetchOptions;

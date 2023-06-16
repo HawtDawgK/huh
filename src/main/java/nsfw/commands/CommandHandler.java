@@ -14,7 +14,6 @@ import org.javacord.api.interaction.SlashCommandInteractionOption;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,8 +25,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommandHandler {
 
-    private static final Map<String, Command> commandMap = new HashMap<>();
-
     private final DiscordApi discordApi;
 
     private final EmbedService embedService;
@@ -38,11 +35,15 @@ public class CommandHandler {
 
     private final FavoritesCommand favoritesCommand;
 
+    private Map<String, Command> commandMap;
+
     @PostConstruct
     public void init() {
-        commandMap.put("posts", postsCommand);
-        commandMap.put("history", historyCommand);
-        commandMap.put("favorites", favoritesCommand);
+        commandMap = Map.ofEntries(
+                Map.entry("posts", postsCommand),
+                Map.entry("history", historyCommand),
+                Map.entry("favorites", favoritesCommand)
+        );
 
         Set<SlashCommandBuilder> slashCommandBuilders = commandMap.values().stream()
                 .map(Command::toSlashCommandBuilder)
@@ -60,7 +61,7 @@ public class CommandHandler {
             checkDisallowedTags(event.getSlashCommandInteraction());
             commandMap.get(event.getSlashCommandInteraction().getCommandName()).apply(event);
         } catch (CommandException e) {
-            log.error(e.getMessage(), e);
+            log.warn(e.getMessage(), e);
             event.getInteraction().createImmediateResponder()
                     .addEmbed(embedService.createErrorEmbed(e.getMessage()))
                     .respond().join();
@@ -85,10 +86,7 @@ public class CommandHandler {
 
         if (channel.isEmpty() || !(channel.get() instanceof ServerTextChannel serverTextChannel)) {
             log.error("Received ChatInputInteractionEvent for non-text channel {}", channel);
-            throw new CommandException("Could not find text channel.");
-        }
-
-        if (!serverTextChannel.isNsfw()) {
+        } else if (!serverTextChannel.isNsfw()) {
             throw new CommandException("This command can only be used in NSFW channels.");
         }
     }

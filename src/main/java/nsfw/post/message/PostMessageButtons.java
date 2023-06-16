@@ -1,4 +1,4 @@
-package nsfw.post;
+package nsfw.post.message;
 
 import lombok.experimental.UtilityClass;
 import org.javacord.api.entity.message.component.ActionRow;

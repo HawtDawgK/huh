@@ -1,9 +1,12 @@
-package nsfw.post;
+package nsfw.post.message;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.enums.PostSite;
+import nsfw.post.PostFetchResult;
+import nsfw.post.PostService;
 import nsfw.post.api.PostFetchOptions;
+import nsfw.post.message.PostMessage;
 import nsfw.post.messageable.PostmessageableService;
 import org.javacord.api.entity.channel.TextChannel;
 

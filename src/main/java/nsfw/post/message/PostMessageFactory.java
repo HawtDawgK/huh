@@ -1,9 +1,10 @@
-package nsfw.post;
+package nsfw.post.message;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nsfw.commands.CommandException;
 import nsfw.enums.PostSite;
+import nsfw.post.PostService;
 import nsfw.post.api.PostFetchOptions;
 import nsfw.post.messageable.PostmessageableService;
 import org.javacord.api.entity.channel.TextChannel;
@@ -18,6 +19,8 @@ public class PostMessageFactory {
     private final PostService postService;
 
     private final PostMessageCache postMessageCache;
+
+    private final PostMessageService postMessageService;
 
     private final PostmessageableService postmessageableService;
 
@@ -38,7 +41,7 @@ public class PostMessageFactory {
         TextChannel textChannel = event.getInteraction().getChannel().orElseThrow(() -> new CommandException("No channel"));
         PostMessage postMessage = new PostApiMessage(postService, postmessageableService, textChannel, maxCount, tags, postSite);
 
-        postMessageCache.addPost(event, postMessage);
+        postMessageService.addPost(event, postMessage);
     }
 
 }
