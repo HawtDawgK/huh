@@ -37,6 +37,27 @@ public class PostMessageService {
         discordApi.addMessageComponentCreateListener(this::handleInteraction);
     }
 
+    public void handleInteraction(MessageComponentCreateEvent event) {
+        long messageId = event.getMessageComponentInteraction().getMessage().getId();
+        boolean messagePresent = postMessageCache.getPostMessageMap().containsKey(messageId);
+
+        if (!messagePresent) {
+            log.error("Received unknown interaction " + messageId);
+            return;
+        }
+
+        String customId = event.getMessageComponentInteraction().getCustomId();
+        switch (customId) {
+            case "nextPageId" -> nextPage(event);
+            case "randomPageId" -> randomPage(event);
+            case "previousPageId" -> previousPage(event);
+            case "addFavoriteId" -> addFavorite(event);
+            case "deleteFavoriteId" -> removeFavorite(event);
+            case "deleteMessageId" -> deleteMessage(event);
+            default -> log.error("Incorrect custom id: " + customId);
+        }
+    }
+
     public void addPost(SlashCommandCreateEvent event, PostMessage postMessage) {
         if (event.getInteraction().getChannel().isEmpty()) {
             return;
@@ -54,7 +75,10 @@ public class PostMessageService {
         postMessageCache.addPost(message.getId(), postMessage);
     }
 
-    private void updateInteraction(MessageComponentInteraction interaction, PostMessage postMessage) {
+    /**
+     * Updates interaction, and updates components
+     */
+    private void updatePostMessage(MessageComponentInteraction interaction, PostMessage postMessage) {
         PostMessageable postMessageable = postMessage.toPostMessageable();
 
         interaction.createOriginalMessageUpdater()
@@ -64,7 +88,10 @@ public class PostMessageService {
                 .update().join();
     }
 
-    private void updateInteraction(PostMessage postMessage) {
+    /**
+     * Update post message, not updating buttons if not available
+     */
+    private void updatePostMessage(PostMessage postMessage) {
         postMessageCache.findByPostMessageUuid(postMessage)
                 .flatMap(discordApi::getCachedMessageById)
                 .ifPresent(message -> {
@@ -78,7 +105,7 @@ public class PostMessageService {
         PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
 
         postMessage.nextPage();
-        updateInteraction(event.getMessageComponentInteraction(), postMessage);
+        updatePostMessage(event.getMessageComponentInteraction(), postMessage);
     }
 
     public void previousPage(MessageComponentCreateEvent event) {
@@ -86,7 +113,7 @@ public class PostMessageService {
         PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
 
         postMessage.previousPage();
-        updateInteraction(event.getMessageComponentInteraction(), postMessage);
+        updatePostMessage(event.getMessageComponentInteraction(), postMessage);
     }
 
     public void randomPage(MessageComponentCreateEvent event) {
@@ -94,29 +121,7 @@ public class PostMessageService {
         PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
         postMessage.randomPage();
 
-        updateInteraction(event.getMessageComponentInteraction(), postMessage);
-    }
-
-    public void handleInteraction(MessageComponentCreateEvent event) {
-        long messageId = event.getMessageComponentInteraction().getMessage().getId();
-
-        PostMessage postMessage = postMessageCache.getPostMessageMap().get(messageId);
-
-        if (postMessage == null) {
-            log.error("Received unknown interaction " + messageId);
-            return;
-        }
-
-        String customId = event.getMessageComponentInteraction().getCustomId();
-        switch (customId) {
-            case "nextPageId" -> nextPage(event);
-            case "randomPageId" -> randomPage(event);
-            case "previousPageId" -> previousPage(event);
-            case "addFavoriteId" -> addFavorite(event);
-            case "deleteFavoriteId" -> removeFavorite(event);
-            case "deleteMessageId" -> deleteMessage(event);
-            default -> log.error("Incorrect custom id: " + customId);
-        }
+        updatePostMessage(event.getMessageComponentInteraction(), postMessage);
     }
 
     private void addFavorite(MessageComponentCreateEvent event) {
@@ -181,7 +186,7 @@ public class PostMessageService {
                 .filter(p -> p.getUser().getId() == favoriteEvent.getUser().getId())
                 .forEach(p -> {
                     p.onFavoriteEvent(favoriteEvent);
-                    updateInteraction(p);
+                    updatePostMessage(p);
                 });
     }
 
@@ -193,7 +198,7 @@ public class PostMessageService {
                 .filter(historyMessage -> historyEvent.getChannel().getId() == historyMessage.getTextChannel().getId())
                 .forEach(p -> {
                     p.onHistoryEvent(historyEvent);
-                    updateInteraction(p);
+                    updatePostMessage(p);
                 });
     }
 

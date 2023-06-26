@@ -18,8 +18,6 @@ public class PostMessageFactory {
 
     private final PostService postService;
 
-    private final PostMessageCache postMessageCache;
-
     private final PostMessageService postMessageService;
 
     private final PostmessageableService postmessageableService;
@@ -30,6 +28,7 @@ public class PostMessageFactory {
                 .tags(tags)
                 .counts(true)
                 .build();
+
         int count = postService.fetchCount(postFetchOptions);
 
         if (count == 0) {
